@@ -73,7 +73,7 @@
   .age-bar.age-old{background:#f75f5f18;border-color:#f75f5f55;color:var(--danger);}
   .age-bar.age-critical{background:#f75f5f28;border-color:#f75f5f88;color:var(--danger);animation:pulse 2s infinite;}
   @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.6;}}
-  .prazo-badge{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;padding:4px 10px;border-radius:6px;border:1px solid;white-space:nowrap;}
+  .prazo-badge{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;padding:4px 10px;border-radius:6px;border:1px solid;white-space:nowrap;display:inline-flex;align-items:center;gap:5px;}
   .prazo-badge.today{background:#f75f5f18;border-color:#f75f5f55;color:var(--danger);}
   .prazo-badge.tomorrow{background:#f7a94f18;border-color:#f7a94f44;color:var(--warn);}
   .prazo-badge.future{background:#4fd18a18;border-color:#4fd18a55;color:var(--success);}
@@ -263,6 +263,9 @@
   .timeline::before{background:linear-gradient(var(--green2),var(--line))}.step-dot{box-shadow:0 0 0 3px #fff}
   .risk-legend{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin:12px 2px 20px;font-size:10px;color:var(--muted)}.risk-legend span{display:flex;align-items:center;gap:6px}.risk-legend i{width:9px;height:9px;border-radius:3px;box-shadow:0 2px 5px #153d2920}
   @keyframes growBar{from{transform:scaleX(0)}to{transform:scaleX(1)}}@keyframes riseBar{from{transform:scaleY(0);opacity:.3}to{transform:scaleY(1);opacity:1}}@keyframes donutIn{from{transform:scale(.82) rotate(-18deg);opacity:.3}to{transform:none;opacity:1}}@keyframes savedFlash{0%,100%{color:#d8eee2}35%{color:#ffe56f;text-shadow:0 0 12px #ffe56f}}
+  @keyframes actionPulse{0%,100%{box-shadow:0 0 0 0 rgba(215,68,68,.18)}50%{box-shadow:0 0 0 8px rgba(215,68,68,0)}}
+  #action-recommendation.ok{border-color:var(--success) !important;animation:none !important}
+  #action-recommendation.ok #action-recommendation-text{color:var(--success)}
   @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 
 /* ===== Tema: dark ===== */
@@ -357,6 +360,28 @@
   .theme-switcher button.active{box-shadow:0 0 0 2px var(--accent) !important;font-weight:700}
   .theme-switcher button:hover{background:var(--surface2) !important}
   #theme-toggle-btn:hover{transform:scale(1.06)}
+  /* ===== #1 Hierarquia visual dos cards (patch aditivo) ===== */
+  .card-name{font-size:18px !important;font-weight:750 !important;letter-spacing:-.01em;line-height:1.25}
+  .card-desc{font-size:12px;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;max-width:520px}
+  .card.open .card-desc{-webkit-line-clamp:unset;overflow:visible}
+  .card-id{font-size:10px;opacity:.75}
+  .card-right{gap:6px !important}
+  .card-right .prazo-badge{order:1;font-size:13px !important;font-weight:700;padding:9px 16px !important;border-width:1.5px}
+  .card-right .prorrog-badge{order:2}
+  .card-right .age-bar{order:3;padding:6px 10px !important;opacity:.85;transform:scale(.92);transform-origin:right}
+  .card-right .age-bar .age-num{font-size:15px !important}
+  .card-right .update-count{order:4;font-size:10px !important;opacity:.7}
+  .card-right .toggle-btn{order:5;font-size:9px !important;opacity:.65}
+  .card-right .edit-tools{order:6}
+  /* ===== #11 Padronização tipográfica (escala fixa 10/11/13/15/20/28) ===== */
+  .kpi-label,.panel-title,.header-title,.legend-item,.nav-summary{font-size:11px !important;font-weight:700 !important;letter-spacing:.06em;text-transform:uppercase;}
+  .kpi-note,.card-desc,.resolved-detail,.step-text,.muted{font-size:12px !important;font-weight:400 !important;letter-spacing:0;}
+  .kpi-value{font-size:28px !important;font-weight:750 !important;letter-spacing:-.02em;}
+  .resolved-name{font-size:15px !important;font-weight:700 !important;}
+  h1{font-size:22px !important;font-weight:750 !important;}
+  h2,.section-label h2{font-size:12px !important;font-weight:700 !important;letter-spacing:.1em;}
+  h3,.resolved-toggle h3{font-size:13px !important;font-weight:700 !important;}
+  .step-badge,.data-chip,.card-id,.result-count,.age-label span{font-size:10px !important;font-weight:600 !important;}
 </style>
 </head>
 <body>
@@ -413,6 +438,7 @@
   </div>
   <div class="header-actions">
     <button class="action-btn" id="edit-mode">Editar informações</button>
+    <button class="action-btn" id="global-search-btn">🔍 Buscar (Ctrl+K)</button>
     <button class="action-btn" id="import-excel">📥 Atualizar via planilha</button>
     <input type="file" id="import-excel-input" accept=".xlsx,.xls" style="display:none">
     <button class="action-btn" id="export-excel">Exportar Excel</button>
@@ -450,6 +476,14 @@
     <article class="kpi" style="--kpi-color:#e58b18"><div class="kpi-label">Sem prazo</div><div class="kpi-value" id="kpi-none">4</div><div class="kpi-note">Risco de perda de controle</div></article>
     <article class="kpi" style="--kpi-color:#7657c8"><div class="kpi-label">Prorrogados</div><div class="kpi-value" id="kpi-extended">6</div><div class="kpi-note">Demandam revisão de causa</div></article>
     <article class="kpi"><div class="kpi-label">Tempo médio em aberto</div><div class="kpi-value" id="kpi-average-age">11,4</div><div class="kpi-note">dias por chamado</div></article>
+  </div>
+  <div id="action-recommendation" class="panel" style="border:1px solid var(--danger);margin-bottom:14px;display:flex;align-items:center;gap:16px;animation:actionPulse 2.4s ease-in-out infinite;">
+    <div style="font-size:26px;flex-shrink:0;">🎯</div>
+    <div style="flex:1;min-width:200px;">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--danger);margin-bottom:3px;">Ação recomendada hoje</div>
+      <div id="action-recommendation-text" style="font-size:13px;color:var(--text);">Calculando...</div>
+    </div>
+    <button id="action-recommendation-btn" class="filter-btn" style="flex-shrink:0;white-space:nowrap;">Ver lista →</button>
   </div>
   <div class="insight-grid">
     <article class="panel">
@@ -509,9 +543,11 @@
   <button class="filter-btn" data-filter="today">Prazo hoje</button>
   <button class="filter-btn" data-filter="none">Sem prazo</button>
   <button class="filter-btn" data-filter="extended">Prorrogados</button>
+  <button class="filter-btn" id="save-filter-btn" title="Salvar busca + filtro atual">☆ Salvar filtro</button>
   <span class="result-count" id="result-count">15 chamados</span>
 </div>
-<div class="empty-state" id="empty-state">Nenhum chamado encontrado com os filtros selecionados.</div>
+<div id="saved-filters-row" style="display:flex;gap:6px;flex-wrap:wrap;margin:-8px 0 12px;"></div>
+<div class="empty-state" id="empty-state" style="display:flex;flex-direction:column;align-items:center;gap:8px;"><span style="font-size:28px;">🔎</span>Nenhum chamado encontrado com os filtros selecionados.</div>
 <div class="edit-notice">Modo de edição ativo: clique nos textos destacados para alterar. As modificações são salvas automaticamente neste navegador.</div>
 <div class="risk-legend" aria-label="Legenda de criticidade"><span><i style="background:#c74343"></i>Prazo hoje ou vencido</span><span><i style="background:#dc851f"></i>Sem prazo definido</span><span><i style="background:#d4a928"></i>Prorrogado</span><span><i style="background:#79a725"></i>Dentro do prazo</span></div>
 <div id="records-root">
@@ -1144,6 +1180,7 @@
   <h2>Equipe Cobrança</h2>
   <div class="section-line"></div>
 </div>
+<div class="team-empty-placeholder" data-team-placeholder="cobranca" style="display:flex;align-items:center;gap:12px;padding:22px 20px;border:1px dashed var(--border);border-radius:12px;background:var(--surface2);color:var(--muted);margin-bottom:20px;"><span style="font-size:22px;">✓</span><span style="font-size:12px;">Nenhum chamado pendente na equipe Cobrança.</span></div>
 <div class="resolved-section" id="res-cob">
   <div class="resolved-toggle" onclick="toggleResolved('res-cob')">
     <div style="width:8px;height:8px;border-radius:50%;background:var(--success);flex-shrink:0"></div>
@@ -1159,6 +1196,7 @@
   <h2>Equipe Suporte Corporativo</h2>
   <div class="section-line"></div>
 </div>
+<div class="team-empty-placeholder" data-team-placeholder="suporte-corporativo" style="display:flex;align-items:center;gap:12px;padding:22px 20px;border:1px dashed var(--border);border-radius:12px;background:var(--surface2);color:var(--muted);margin-bottom:20px;"><span style="font-size:22px;">✓</span><span style="font-size:12px;">Nenhum chamado pendente na equipe Suporte Corporativo.</span></div>
 <div class="resolved-section" id="res-sup">
   <div class="resolved-toggle" onclick="toggleResolved('res-sup')">
     <div style="width:8px;height:8px;border-radius:50%;background:var(--success);flex-shrink:0"></div>
@@ -1174,6 +1212,7 @@
   <h2>Equipe Cadastro</h2>
   <div class="section-line"></div>
 </div>
+<div class="team-empty-placeholder" data-team-placeholder="cadastro" style="display:flex;align-items:center;gap:12px;padding:22px 20px;border:1px dashed var(--border);border-radius:12px;background:var(--surface2);color:var(--muted);margin-bottom:20px;"><span style="font-size:22px;">✓</span><span style="font-size:12px;">Nenhum chamado pendente na equipe Cadastro.</span></div>
 <div class="resolved-section" id="res-cad">
   <div class="resolved-toggle" onclick="toggleResolved('res-cad')">
     <div style="width:8px;height:8px;border-radius:50%;background:var(--success);flex-shrink:0"></div>
@@ -1189,6 +1228,7 @@
   <h2>Equipe Faturamento</h2>
   <div class="section-line"></div>
 </div>
+<div class="team-empty-placeholder" data-team-placeholder="faturamento" style="display:flex;align-items:center;gap:12px;padding:22px 20px;border:1px dashed var(--border);border-radius:12px;background:var(--surface2);color:var(--muted);margin-bottom:20px;"><span style="font-size:22px;">✓</span><span style="font-size:12px;">Nenhum chamado pendente na equipe Faturamento.</span></div>
 <div class="resolved-section" id="res-fat">
   <div class="resolved-toggle" onclick="toggleResolved('res-fat')">
     <div style="width:8px;height:8px;border-radius:50%;background:var(--success);flex-shrink:0"></div>
@@ -1226,6 +1266,15 @@
     </div>
     <div class="modal-foot"><button type="button" data-close-modal>Cancelar</button><button type="submit" class="save">Salvar registro</button></div>
   </form>
+</div>
+<div class="modal-backdrop" id="global-search-modal">
+  <div class="modal" style="max-width:560px;max-height:70vh;display:flex;flex-direction:column;">
+    <div class="modal-head"><h3>Buscar chamado</h3><button type="button" class="modal-close" data-close-modal>×</button></div>
+    <div style="padding:14px 20px;">
+      <input id="global-search-input" type="text" placeholder="Digite o nome do cliente, OS ou parte da descrição…" style="width:100%;box-sizing:border-box;padding:12px 14px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:15px;outline:none;">
+    </div>
+    <div id="global-search-results" style="overflow-y:auto;padding:0 12px 16px;flex:1;"></div>
+  </div>
 </div>
 <div class="modal-backdrop" id="complete-modal">
   <form class="modal" id="complete-form">
@@ -1297,7 +1346,10 @@
   const daysBetween=(a,b)=>{const x=dateFromISO(a),y=dateFromISO(b);return x&&y?Math.max(0,Math.round((y-x)/86400000)):0};
   const parseBRDate=(value,fallbackYear='2026')=>{const m=String(value||'').match(/(\d{1,2})\/(\d{1,2})(?:\/(\d{4}))?/);return m?`${m[3]||fallbackYear}-${String(m[2]).padStart(2,'0')}-${String(m[1]).padStart(2,'0')}`:''};
   const deadlineStatus=date=>{if(!date)return'none';const diff=daysBetween(localToday(),date),raw=(dateFromISO(date)-dateFromISO(localToday()))/86400000;return raw<0?'overdue':diff===0?'today':diff===1?'tomorrow':'future'};
-  const deadlineLabel=date=>{const status=deadlineStatus(date),formatted=formatDate(date);return status==='overdue'?`⛔ Prazo vencido: ${formatted}`:status==='today'?`🔴 Prazo: HOJE ${formatted.slice(0,5)}`:status==='tomorrow'?`⚠ Prazo: ${formatted.slice(0,5)}`:status==='future'?`📅 Prazo: ${formatted.slice(0,5)}`:'Sem prazo definido'};
+  const ICON_ALERT='<svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" style="flex-shrink:0"><circle cx="6" cy="6" r="5"/><path d="M6 3.5v3"/><circle cx="6" cy="8.3" r=".6" fill="currentColor" stroke="none"/></svg>';
+  const ICON_WARN='<svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" style="flex-shrink:0"><path d="M6 1.5l5 9H1l5-9z"/><path d="M6 5.3v2.2"/><circle cx="6" cy="9" r=".55" fill="currentColor" stroke="none"/></svg>';
+  const ICON_CALENDAR='<svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" style="flex-shrink:0"><rect x="1.5" y="2.5" width="9" height="8" rx="1.5"/><path d="M1.5 5h9M4 1.2v2M8 1.2v2"/></svg>';
+  const deadlineLabel=date=>{const status=deadlineStatus(date),formatted=formatDate(date);return status==='overdue'?`${ICON_ALERT} Prazo vencido: ${formatted}`:status==='today'?`${ICON_ALERT} Prazo: HOJE ${formatted.slice(0,5)}`:status==='tomorrow'?`${ICON_WARN} Prazo: ${formatted.slice(0,5)}`:status==='future'?`${ICON_CALENDAR} Prazo: ${formatted.slice(0,5)}`:'Sem prazo definido'};
   function toggle(id){document.getElementById(id)?.classList.toggle('open')}
   function toggleResolved(id){document.getElementById(id)?.classList.toggle('open')}
   function toggleCsat(id){document.getElementById(id)?.classList.toggle('open')}
@@ -1332,7 +1384,7 @@
         const age=daysBetween(card.dataset.openDate,localToday()),ageNum=card.querySelector('.age-num');if(ageNum)ageNum.textContent=age;
         const ageBar=card.querySelector('.age-bar');if(ageBar){ageBar.classList.remove('age-fresh','age-medium','age-old','age-critical');ageBar.classList.add(age>=31?'age-critical':age>=16?'age-old':age>=8?'age-medium':'age-fresh')}
       }
-      const badge=card.querySelector('.prazo-badge');if(badge){const status=deadlineStatus(card.dataset.deadlineDate);badge.className=`prazo-badge ${status}`;badge.textContent=deadlineLabel(card.dataset.deadlineDate)}
+      const badge=card.querySelector('.prazo-badge');if(badge){const status=deadlineStatus(card.dataset.deadlineDate);badge.className=`prazo-badge ${status}`;badge.innerHTML=deadlineLabel(card.dataset.deadlineDate)}
       let extensionBadge=card.querySelector('.prorrog-badge');const extensionCount=Number(card.dataset.extensionCount)||0;
       if(extensionCount&&!extensionBadge){extensionBadge=document.createElement('div');extensionBadge.className='prorrog-badge';card.querySelector('.card-right')?.insertBefore(extensionBadge,card.querySelector('.update-count'))}
       if(extensionBadge){if(extensionCount){extensionBadge.textContent=`↻ ${extensionCount}ª prorrogação${extensionCount>1?'':' '}`.trim()}else extensionBadge.remove()}
@@ -1383,8 +1435,32 @@
       const heading=document.querySelector(`#${cfg.section} .resolved-toggle h3`);if(heading)heading.textContent=`✓ Chamados Resolvidos — ${cfg.label} (${resolvedCount})`;
     });
     setText('footer-summary',`Relatório gerado com base na planilha de SAC exportada em 27/07/2026 · Equipe Manutenção Portaria & Varejo · ${totals.open} atendimentos abertos · ${resolvedTotal} resolvidos no período`);
+    updateActionRecommendation(totals);
     return totals;
   }
+  function updateActionRecommendation(totals){
+    const box=document.getElementById('action-recommendation'),text=document.getElementById('action-recommendation-text'),btn=document.getElementById('action-recommendation-btn');
+    if(!box)return;
+    if(totals.today>0||totals.noOwner>0){
+      const parts=[];
+      if(totals.today>0)parts.push(`${totals.today} chamado${totals.today===1?'':'s'} com prazo vencido ou hoje`);
+      if(totals.noOwner>0)parts.push(`${totals.noOwner} sem responsável definido`);
+      text.textContent=`${parts.join(' + ')} — comece por aqui.`;
+      box.classList.remove('ok');btn.style.display='inline-flex';btn.dataset.target='today';
+    }else if(totals.none>0){
+      text.textContent=`${totals.none} chamado${totals.none===1?'':'s'} sem prazo definido — risco de perder o controle do caso.`;
+      box.classList.remove('ok');btn.style.display='inline-flex';btn.dataset.target='none';
+    }else{
+      text.textContent='Nenhuma pendência crítica identificada no momento. Bom trabalho!';
+      box.classList.add('ok');btn.style.display='none';
+    }
+  }
+  document.getElementById('action-recommendation-btn')?.addEventListener('click',()=>{
+    const target=document.getElementById('action-recommendation-btn').dataset.target||'today';
+    document.querySelector('[data-view-target="management"]')?.click();
+    document.querySelector(`.filter-btn[data-filter="${target}"]`)?.click();
+    document.querySelector('.toolbar')?.scrollIntoView({behavior:'smooth',block:'start'});
+  });
   let activeFilter='all';
   function applyFilters(){
     const cards=getCards(),term=document.getElementById('search').value.toLocaleLowerCase('pt-BR').trim();let visible=0;
@@ -1394,12 +1470,13 @@
       const show=matchesText&&matchesType;card.classList.toggle('filtered-out',!show);if(show)visible++;
     });
     document.querySelectorAll('#records-root .section-label').forEach((label,i,labels)=>{
-      const next=labels[i+1];let node=label.nextElementSibling,hasVisible=false;
-      while(node&&node!==next){if(node.classList?.contains('card')&&!node.classList.contains('filtered-out'))hasVisible=true;node=node.nextElementSibling}
+      const next=labels[i+1];let node=label.nextElementSibling,hasVisible=false,placeholder=null;
+      while(node&&node!==next){if(node.classList?.contains('card')&&!node.classList.contains('filtered-out'))hasVisible=true;if(node.classList?.contains('team-empty-placeholder'))placeholder=node;node=node.nextElementSibling}
       label.classList.toggle('filtered-out',!hasVisible);
+      if(placeholder)placeholder.style.display=(!hasVisible&&activeFilter==='all'&&!term)?'flex':'none';
     });
     document.querySelectorAll('.resolved-section').forEach(s=>s.classList.toggle('filtered-out',activeFilter!=='all'||!!term));
-    setText('result-count',`${visible} ${visible===1?'chamado':'chamados'}`);document.getElementById('empty-state').style.display=visible?'none':'block';
+    setText('result-count',`${visible} ${visible===1?'chamado':'chamados'}`);document.getElementById('empty-state').style.display=visible?'none':'flex';
   }
   function openModal(mode,cardId=''){
     const form=document.getElementById('record-form');form.dataset.mode=mode;form.dataset.originalSnapshot='{}';document.getElementById('f-card-id').value=cardId;
@@ -1502,7 +1579,7 @@
     if(document.getElementById('f-date').value&&card.querySelector('.abertura-row strong'))card.querySelector('.abertura-row strong').textContent=formatDate(document.getElementById('f-date').value);
     card.querySelector('.card-name').textContent=document.getElementById('f-client').value;card.querySelector('.card-desc').textContent=document.getElementById('f-summary').value;card.querySelector('.problem-box p').textContent=document.getElementById('f-description').value;card.querySelector('.age-num').textContent=openDate?daysBetween(openDate,localToday()):'0';
     const destination=document.getElementById(TEAMS[team]?.section||'res-p');if(card.nextElementSibling!==destination)destination.before(card);
-    const badge=card.querySelector('.prazo-badge');badge.className=`prazo-badge ${deadlineType}`;badge.textContent=deadlineLabel(deadline);
+    const badge=card.querySelector('.prazo-badge');badge.className=`prazo-badge ${deadlineType}`;badge.innerHTML=deadlineLabel(deadline);
     if(document.getElementById('f-action').value)addAction(card,document.getElementById('f-action-type').value,document.getElementById('f-responsible').value,document.getElementById('f-action').value,document.getElementById('f-evidence').value);
     decorateCards();calculateTotals();saveRecords();applyFilters();closeModal();
   });
@@ -1733,6 +1810,74 @@ ${stepsHtml}
     });
   });
   document.addEventListener('click',e=>{if(!e.target.closest('#theme-switcher-widget'))document.getElementById('theme-panel').style.display='none'});
+
+  // ====== BUSCA GLOBAL (Ctrl+K / Cmd+K) ======
+  function openGlobalSearch(){
+    document.getElementById('global-search-modal').classList.add('open');
+    const input=document.getElementById('global-search-input');input.value='';input.focus();
+    renderGlobalSearchResults('');
+  }
+  function closeGlobalSearch(){document.getElementById('global-search-modal').classList.remove('open')}
+  function renderGlobalSearchResults(term){
+    const container=document.getElementById('global-search-results');
+    term=term.toLocaleLowerCase('pt-BR').trim();
+    if(!term){container.innerHTML='<div style="padding:20px;text-align:center;color:var(--muted);font-size:12px;">Digite para buscar em todos os chamados, de todas as equipes.</div>';return}
+    const matches=getCards().filter(c=>c.textContent.toLocaleLowerCase('pt-BR').includes(term)).slice(0,8);
+    if(!matches.length){container.innerHTML='<div style="padding:20px;text-align:center;color:var(--muted);font-size:12px;">Nenhum chamado encontrado para essa busca.</div>';return}
+    container.innerHTML=matches.map(c=>{
+      const name=clean(c.querySelector('.card-name')?.textContent),id=clean(c.querySelector('.card-id')?.textContent),team=TEAMS[c.dataset.team]?.label||'—';
+      return `<div class="global-search-result" data-card-id="${c.id}" style="padding:12px 10px;border-radius:8px;cursor:pointer;border-bottom:1px solid var(--border);"><div style="font-weight:650;font-size:13px;color:var(--text);">${name}</div><div style="font-size:11px;color:var(--muted);margin-top:2px;">${id} · ${team}</div></div>`;
+    }).join('');
+    container.querySelectorAll('.global-search-result').forEach(el=>{
+      el.addEventListener('mouseenter',()=>el.style.background='var(--surface2)');
+      el.addEventListener('mouseleave',()=>el.style.background='transparent');
+      el.addEventListener('click',()=>{
+        const card=document.getElementById(el.dataset.cardId);if(!card)return;
+        closeGlobalSearch();
+        document.querySelector('[data-view-target="management"]')?.click();
+        activeFilter='all';document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));document.querySelector('.filter-btn[data-filter="all"]')?.classList.add('active');
+        document.getElementById('search').value='';applyFilters();
+        card.classList.add('open');
+        setTimeout(()=>{card.scrollIntoView({behavior:'smooth',block:'center'});card.style.transition='box-shadow .3s';card.style.boxShadow='0 0 0 3px var(--accent)';setTimeout(()=>card.style.boxShadow='',1600)},80);
+      });
+    });
+  }
+  document.getElementById('global-search-btn').addEventListener('click',openGlobalSearch);
+  document.getElementById('global-search-input').addEventListener('input',e=>renderGlobalSearchResults(e.target.value));
+  document.addEventListener('keydown',e=>{
+    if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();openGlobalSearch()}
+    if(e.key==='Escape')closeGlobalSearch();
+  });
+  document.getElementById('global-search-modal').addEventListener('click',e=>{if(e.target.matches('[data-close-modal]')||e.target===document.getElementById('global-search-modal'))closeGlobalSearch()});
+
+  // ====== FILTROS SALVOS ======
+  const SAVED_FILTERS_KEY='newline_sac_saved_filters';
+  function getSavedFilters(){try{return JSON.parse(localStorage.getItem(SAVED_FILTERS_KEY)||'[]')}catch(e){return []}}
+  function setSavedFilters(list){localStorage.setItem(SAVED_FILTERS_KEY,JSON.stringify(list))}
+  function renderSavedFilters(){
+    const row=document.getElementById('saved-filters-row'),list=getSavedFilters();
+    if(!list.length){row.innerHTML='';return}
+    row.innerHTML=list.map((f,i)=>`<span class="filter-btn" data-saved-index="${i}" style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;">⭐ ${escHtml(f.name)}<span data-remove-saved="${i}" style="opacity:.6;font-weight:900;padding-left:2px;" title="Remover">×</span></span>`).join('');
+    row.querySelectorAll('[data-saved-index]').forEach(chip=>{
+      chip.addEventListener('click',e=>{
+        if(e.target.matches('[data-remove-saved]')){
+          const idx=Number(e.target.dataset.removeSaved);const arr=getSavedFilters();arr.splice(idx,1);setSavedFilters(arr);renderSavedFilters();return;
+        }
+        const idx=Number(chip.dataset.savedIndex),f=getSavedFilters()[idx];if(!f)return;
+        document.getElementById('search').value=f.search;
+        activeFilter=f.filter;document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));document.querySelector(`.filter-btn[data-filter="${f.filter}"]`)?.classList.add('active');
+        applyFilters();
+      });
+    });
+  }
+  document.getElementById('save-filter-btn').addEventListener('click',()=>{
+    const name=prompt('Nome para este filtro (ex: "Meus casos", "Varejo urgente"):');
+    if(!name)return;
+    const list=getSavedFilters();
+    list.push({name:name.trim().slice(0,30),search:document.getElementById('search').value,filter:activeFilter});
+    setSavedFilters(list);renderSavedFilters();
+  });
+  renderSavedFilters();
 
   document.body.dataset.view='dashboard';
   document.querySelectorAll('.view-tab').forEach(tab=>tab.addEventListener('click',()=>{
