@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SAC — Atendimentos Abertos Sem Solução · 29/07/2026</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+  :root{--bg:#0f1117;--surface:#181c27;--surface2:#1e2335;--border:#2a2f45;--text:#e4e8f5;--muted:#6b7494;--accent:#4f8ef7;--warn:#f7a94f;--danger:#f75f5f;--success:#4fd18a;--purple:#a478f5;--portaria:#4f8ef7;--varejo:#f7a94f;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:14px;line-height:1.6;}
+  header{background:var(--surface);border-bottom:1px solid var(--border);padding:28px 40px 24px;display:flex;align-items:flex-start;justify-content:space-between;gap:24px;flex-wrap:wrap;}
+  .header-title{font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+  header h1{font-size:22px;font-weight:700;color:var(--text);}
+  .header-date{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--danger);margin-top:4px;}
+  .header-stats{display:flex;gap:16px;flex-wrap:wrap;align-items:center;}
+  .stat-pill{display:flex;flex-direction:column;align-items:center;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 20px;min-width:80px;}
+  .stat-pill .num{font-size:24px;font-weight:700;font-family:'JetBrains Mono',monospace;line-height:1;}
+  .stat-pill .lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:4px;}
+  .stat-pill.p{border-color:#4f8ef755;}.stat-pill.p .num{color:var(--portaria);}
+  .stat-pill.v{border-color:#f7a94f55;}.stat-pill.v .num{color:var(--varejo);}
+  .stat-pill.tot .num{color:var(--text);}
+  main{padding:32px 40px;max-width:1200px;margin:0 auto;}
+  .section-label{display:flex;align-items:center;gap:12px;margin-bottom:20px;margin-top:36px;}
+  .section-label:first-child{margin-top:0;}
+  .section-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+  .section-label h2{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);}
+  .section-line{flex:1;height:1px;background:var(--border);}
+  .prorrog-badge{font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;background:#a478f514;border:1px solid #a478f544;color:var(--purple);padding:2px 8px;border-radius:4px;white-space:nowrap;}
+  .csat-group{border:1px solid #a478f533;border-radius:12px;overflow:hidden;margin-bottom:16px;}
+  .csat-group-header{background:#a478f50d;padding:12px 20px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #a478f522;cursor:pointer;user-select:none;}
+  .csat-group-header:hover{background:#a478f514;}
+  .csat-tag{font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;background:#a478f522;border:1px solid #a478f555;color:var(--purple);padding:2px 8px;border-radius:4px;}
+  .csat-group-header h3{font-size:12px;font-weight:600;color:var(--purple);flex:1;}
+  .csat-group-header .csat-count{font-size:11px;color:var(--muted);}
+  .csat-group-header svg{transition:transform .25s;flex-shrink:0;}
+  .csat-group.open .csat-group-header svg{transform:rotate(180deg);}
+  .csat-cards{display:none;padding:12px;background:var(--bg);}
+  .csat-group.open .csat-cards{display:block;}
+  .csat-cards .card{margin-bottom:10px;}.csat-cards .card:last-child{margin-bottom:0;}
+  .resolved-section{margin-top:32px;border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+  .resolved-toggle{display:flex;align-items:center;gap:12px;padding:14px 20px;cursor:pointer;user-select:none;background:var(--surface2);}
+  .resolved-toggle:hover{background:#202538;}
+  .resolved-toggle h3{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--success);flex:1;}
+  .resolved-toggle svg{transition:transform .25s;flex-shrink:0;}
+  .resolved-section.open .resolved-toggle svg{transform:rotate(180deg);}
+  .resolved-list{display:none;padding:16px 20px;}
+  .resolved-section.open .resolved-list{display:block;}
+  .resolved-item{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);}
+  .resolved-item:last-child{border-bottom:none;}
+  .resolved-check{width:18px;height:18px;border-radius:50%;background:#4fd18a22;border:1.5px solid var(--success);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;}
+  .resolved-check svg{width:9px;height:9px;}
+  .resolved-info{flex:1;}
+  .resolved-name{font-size:13px;font-weight:600;color:var(--text);}
+  .resolved-detail{font-size:11px;color:var(--muted);margin-top:2px;}
+  .resolved-date{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--success);margin-top:3px;}
+  .resolved-history{margin-top:9px;border:1px solid var(--border);border-radius:8px;background:#fff;overflow:hidden}.resolved-history summary{cursor:pointer;padding:8px 10px;font-size:10px;font-weight:700;color:var(--green2);background:#f2f7f4}.resolved-history .timeline-wrap{display:block;padding:12px 16px;border-top:1px solid var(--border)}.resolved-history .edit-tools{display:none}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:16px;overflow:hidden;transition:border-color .2s;}
+  .card:hover{border-color:#3a4060;}
+  .card-header{padding:18px 22px 16px;display:flex;align-items:flex-start;justify-content:space-between;gap:16px;cursor:pointer;user-select:none;}
+  .card-meta{display:flex;flex-direction:column;gap:4px;}
+  .card-id{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);font-weight:500;}
+  .card-name{font-size:15px;font-weight:600;color:var(--text);}
+  .card-desc{font-size:12px;color:var(--muted);margin-top:4px;max-width:680px;line-height:1.5;}
+  .card-right{display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0;}
+  .age-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;border:1px solid;white-space:nowrap;}
+  .age-bar .age-num{font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:700;line-height:1;}
+  .age-bar .age-label{display:flex;flex-direction:column;line-height:1.2;}
+  .age-bar .age-label span:first-child{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;opacity:.7;}
+  .age-bar .age-label span:last-child{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;}
+  .age-bar.age-fresh{background:#4fd18a0f;border-color:#4fd18a33;color:var(--success);}
+  .age-bar.age-medium{background:#f7a94f0f;border-color:#f7a94f44;color:var(--warn);}
+  .age-bar.age-old{background:#f75f5f18;border-color:#f75f5f55;color:var(--danger);}
+  .age-bar.age-critical{background:#f75f5f28;border-color:#f75f5f88;color:var(--danger);animation:pulse 2s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.6;}}
+  .prazo-badge{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;padding:4px 10px;border-radius:6px;border:1px solid;white-space:nowrap;}
+  .prazo-badge.today{background:#f75f5f18;border-color:#f75f5f55;color:var(--danger);}
+  .prazo-badge.tomorrow{background:#f7a94f18;border-color:#f7a94f44;color:var(--warn);}
+  .prazo-badge.future{background:#4fd18a18;border-color:#4fd18a55;color:var(--success);}
+  .prazo-badge.none{background:#6b749418;border-color:#6b749455;color:var(--muted);}
+  .prazo-badge.overdue{background:#f75f5f30;border-color:#f75f5f88;color:var(--danger);animation:pulse 2s infinite;}
+  .update-count{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px;}
+  .update-count .dot-row{display:flex;gap:3px;}
+  .update-count .dot-row span{width:6px;height:6px;border-radius:50%;display:inline-block;}
+  .dot-done{background:var(--success);}.dot-warn{background:var(--warn);}.dot-fail{background:var(--danger);}.dot-muted{background:var(--muted);}
+  .toggle-btn{font-size:10px;color:var(--muted);display:flex;align-items:center;gap:4px;}
+  .toggle-btn svg{transition:transform .25s;}
+  .card.open .toggle-btn svg{transform:rotate(180deg);}
+  .timeline-wrap{display:none;padding:0 22px 22px;border-top:1px solid var(--border);}
+  .card.open .timeline-wrap{display:block;}
+  .timeline-intro{font-size:11px;color:var(--muted);padding:14px 0 18px;border-bottom:1px solid var(--border);margin-bottom:20px;}
+  .timeline{position:relative;padding-left:28px;}
+  .timeline::before{content:'';position:absolute;left:7px;top:6px;bottom:0;width:1px;background:var(--border);}
+  .step{position:relative;margin-bottom:20px;}.step:last-child{margin-bottom:0;}
+  .step-dot{position:absolute;left:-28px;top:4px;width:14px;height:14px;border-radius:50%;border:2px solid;background:var(--bg);z-index:1;}
+  .step.type-alert .step-dot{border-color:var(--danger);}
+  .step.type-action .step-dot{border-color:var(--accent);}
+  .step.type-waiting .step-dot{border-color:var(--warn);}
+  .step.type-scheduled .step-dot{border-color:var(--purple);}
+  .step.type-done .step-dot{border-color:var(--success);}
+  .step.type-fail .step-dot{border-color:var(--danger);}
+  .step.type-info .step-dot{border-color:var(--muted);}
+  .step.type-new .step-dot{border-color:var(--success);background:#4fd18a22;}
+  .step-badge{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:2px 7px;border-radius:4px;display:inline-block;margin-bottom:5px;}
+  .step.type-alert .step-badge{background:#f75f5f22;color:var(--danger);}
+  .step.type-action .step-badge{background:#4f8ef722;color:var(--accent);}
+  .step.type-waiting .step-badge{background:#f7a94f22;color:var(--warn);}
+  .step.type-scheduled .step-badge{background:#a478f522;color:var(--purple);}
+  .step.type-done .step-badge{background:#4fd18a22;color:var(--success);}
+  .step.type-fail .step-badge{background:#f75f5f22;color:var(--danger);}
+  .step.type-info .step-badge{background:#6b749422;color:var(--muted);}
+  .step.type-new .step-badge{background:#4fd18a33;color:var(--success);}
+  .step-date{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:3px;}
+  .step-author{font-size:11px;font-weight:600;color:var(--accent);margin-bottom:4px;}
+  .step-text{font-size:13px;color:#c0c8e0;line-height:1.55;}
+  .problem-box{background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--muted);border-radius:6px;padding:14px 16px;margin-bottom:18px;}
+  .problem-box label{font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px;}
+  .problem-box p{font-size:12px;color:#9099b8;line-height:1.55;}
+  .problem-box ul{font-size:12px;color:#9099b8;line-height:1.7;padding-left:18px;margin-top:6px;}
+  .abertura-row{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted);margin-bottom:16px;}
+  .abertura-row strong{color:var(--text);}
+  .new-tag{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;background:#4fd18a22;border:1px solid #4fd18a55;color:var(--success);padding:2px 7px;border-radius:4px;margin-left:8px;vertical-align:middle;}
+  .csat-inline-tag{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;background:#a478f522;border:1px solid #a478f555;color:var(--purple);padding:2px 7px;border-radius:4px;margin-left:8px;vertical-align:middle;}
+  footer{text-align:center;padding:28px;font-size:11px;color:var(--muted);border-top:1px solid var(--border);margin-top:20px;}
+  /* Dashboard executivo */
+  :root{--bg:#f4f7f5;--surface:#ffffff;--surface2:#f7faf8;--border:#dfe8e2;--text:#17251d;--muted:#6b7d72;--accent:#087a47;--warn:#e58b18;--danger:#d84545;--success:#169b62;--purple:#7657c8;--portaria:#1687d9;--varejo:#e58b18;}
+  body{background:linear-gradient(180deg,#edf5f0 0,#f7f9f8 320px);color:var(--text);}
+  header{background:linear-gradient(125deg,#063c2a,#087a47 58%,#0f9259);border:0;padding:26px max(28px,calc((100% - 1320px)/2));color:#fff;box-shadow:0 12px 30px #063c2a20;}
+  .header-title,.header-date{color:#d3eee0}.header-date{font-family:Inter,sans-serif}
+  header h1{font-size:25px;color:#fff;letter-spacing:-.03em}
+  .stat-pill{background:#ffffff14;border-color:#ffffff28;backdrop-filter:blur(8px)}
+  .stat-pill .lbl{color:#d6eee2}.stat-pill.p .num,.stat-pill.v .num,.stat-pill.tot .num{color:#fff}
+  .dashboard-shell{max-width:1320px;margin:0 auto;padding:28px 28px 0}
+  .dashboard-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:14px}
+  .kpi{background:#fff;border:1px solid var(--border);border-radius:16px;padding:18px;box-shadow:0 8px 24px #193d2b0a;position:relative;overflow:hidden}
+  .kpi:after{content:"";position:absolute;right:-18px;top:-18px;width:72px;height:72px;border-radius:50%;background:var(--kpi-color,#087a47);opacity:.08}
+  .kpi-label{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+  .kpi-value{font-size:31px;line-height:1.1;font-weight:750;letter-spacing:-.04em;margin:7px 0 5px;color:var(--kpi-color,#087a47)}
+  .kpi-note{font-size:11px;color:var(--muted)}
+  .insight-grid{display:grid;grid-template-columns:1.1fr .9fr 1fr;gap:14px}
+  .panel{background:#fff;border:1px solid var(--border);border-radius:16px;padding:18px;box-shadow:0 8px 24px #193d2b0a}
+  .panel-title{font-size:12px;font-weight:750;margin-bottom:16px;color:var(--text)}
+  .segment-row,.deadline-row{display:grid;grid-template-columns:82px 1fr 34px;align-items:center;gap:10px;margin:11px 0;font-size:11px;color:var(--muted)}
+  .bar-track{height:9px;border-radius:99px;background:#edf2ef;overflow:hidden}.bar-fill{height:100%;border-radius:inherit}
+  .deadline-legend{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .legend-item{padding:10px;border-radius:10px;background:var(--surface2);display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted)}
+  .legend-item b{margin-left:auto;color:var(--text);font-size:14px}.legend-dot{width:8px;height:8px;border-radius:50%}
+  .priority-box{background:linear-gradient(135deg,#fff7ea,#fff);border:1px solid #f4d7a5;border-radius:12px;padding:13px}
+  .priority-box strong{display:block;font-size:12px;color:#9a5b08;margin-bottom:5px}.priority-box p{font-size:11px;color:#806944;line-height:1.5}
+  main{padding:20px 28px 40px;max-width:1320px}
+  .toolbar{position:sticky;top:10px;z-index:20;background:#ffffffeb;backdrop-filter:blur(12px);border:1px solid var(--border);border-radius:14px;padding:10px;display:flex;gap:8px;align-items:center;margin-bottom:26px;box-shadow:0 8px 24px #193d2b12}
+  .search-box{flex:1;min-width:200px;border:1px solid var(--border);border-radius:10px;padding:10px 12px;background:#fff;color:var(--text);outline:none}
+  .search-box:focus{border-color:var(--accent);box-shadow:0 0 0 3px #087a4714}
+  .filter-btn{border:1px solid var(--border);background:#fff;color:var(--muted);border-radius:10px;padding:9px 12px;font:600 11px Inter,sans-serif;cursor:pointer}
+  .filter-btn:hover,.filter-btn.active{background:#eaf5ef;border-color:#9bcdb2;color:var(--accent)}
+  .result-count{font-size:11px;color:var(--muted);padding:0 8px;white-space:nowrap}
+  .section-label{margin-top:30px}.section-label h2{font-size:12px;color:#465b4f}
+  .card{border-radius:14px;box-shadow:0 5px 18px #193d2b08}.card:hover{border-color:#aac8b7;box-shadow:0 8px 24px #193d2b10}
+  .card-header{padding:17px 18px}.card-name{color:var(--text)}.card-desc{color:var(--muted)}
+  .age-bar{padding:8px 11px}.age-bar .age-num{font-size:20px}.age-bar.age-critical{animation:none}
+  .step-text{color:#53675b}.step-dot{background:#fff}.problem-box p,.problem-box ul{color:#64776b}
+  .csat-cards{background:#f7faf8}.resolved-toggle{background:#f2f7f4}
+  .empty-state{display:none;text-align:center;padding:44px;background:#fff;border:1px dashed var(--border);border-radius:14px;color:var(--muted)}
+  .card.filtered-out,.section-label.filtered-out,.resolved-section.filtered-out{display:none!important}
+  @media(max-width:900px){.dashboard-grid{grid-template-columns:repeat(2,1fr)}.insight-grid{grid-template-columns:1fr}.toolbar{flex-wrap:wrap}.search-box{flex-basis:100%}.card-header{flex-direction:column}.card-right{width:100%;align-items:flex-start}.age-bar{align-self:stretch}.dashboard-shell,main{padding-left:16px;padding-right:16px}}
+  @media(max-width:520px){.dashboard-grid{grid-template-columns:1fr 1fr}.kpi{padding:14px}.kpi-value{font-size:26px}.filter-btn{flex:1}.result-count{width:100%;text-align:center}}
+  /* Identidade New Line e recursos de gestão */
+  .brand-lockup{display:flex;align-items:center;gap:16px;min-width:290px}
+  .brand-mark{display:grid;grid-template-columns:repeat(3,13px);gap:3px;transform:skewX(-8deg)}
+  .brand-mark i{display:block;height:8px;background:#efba21;border-radius:1px}.brand-mark i:nth-child(n+4){background:#fff}
+  .brand-name{font-size:21px;font-weight:800;letter-spacing:.12em;color:#fff;line-height:1}.brand-sub{font-size:8px;letter-spacing:.2em;color:#d5eadf;margin-top:5px}
+  .header-copy{padding-left:20px;border-left:1px solid #ffffff2e}
+  .header-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .action-btn{border:1px solid #ffffff3b;background:#ffffff12;color:#fff;border-radius:9px;padding:10px 13px;font:700 11px Inter,sans-serif;cursor:pointer;transition:.2s}
+  .action-btn:hover{background:#ffffff22}.action-btn.primary{background:#efba21;border-color:#efba21;color:#153b2c}.action-btn.primary:hover{background:#ffd34f}
+  .chart-grid{display:grid;grid-template-columns:1.5fr 1fr;gap:14px;margin-top:14px}
+  .age-chart{height:215px;display:flex;align-items:flex-end;gap:22px;padding:20px 12px 0;border-bottom:1px solid var(--border)}
+  .age-column{flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;min-width:54px}
+  .age-column b{font-size:12px;color:#07492f;margin-bottom:7px}.age-column span{font-size:10px;color:var(--muted);margin-top:8px;text-align:center}
+  .age-column i{display:block;width:min(54px,72%);min-height:3px;border-radius:8px 8px 0 0;background:linear-gradient(180deg,#9bca35,#087a47);box-shadow:0 8px 16px #087a4720}
+  .donut-wrap{display:flex;align-items:center;justify-content:center;gap:30px;min-height:215px}
+  .donut{width:150px;height:150px;border-radius:50%;background:conic-gradient(var(--danger) 0 40%,var(--warn) 40% 60%,var(--success) 60% 73%,#9aa89f 73%);position:relative;flex-shrink:0}
+  .donut:after{content:"";position:absolute;inset:31px;border-radius:50%;background:#fff}
+  .donut-center{position:absolute;inset:0;z-index:1;display:grid;place-content:center;text-align:center}.donut-center b{font-size:26px;color:var(--text)}.donut-center span{font-size:9px;color:var(--muted);text-transform:uppercase}
+  .donut-key{display:grid;gap:10px}.donut-key div{display:grid;grid-template-columns:8px 1fr auto;gap:8px;align-items:center;font-size:10px;color:var(--muted)}.donut-key b{color:var(--text)}
+  .edit-tools{display:flex;gap:6px;justify-content:flex-end;margin-top:2px}
+  .mini-btn{border:1px solid var(--border);background:#fff;color:var(--accent);border-radius:7px;padding:5px 8px;font:700 9px Inter,sans-serif;cursor:pointer}.mini-btn:hover{background:#eaf5ef}
+  .mini-btn.complete-card{background:linear-gradient(135deg,#0b5b43,#148260);border-color:#0b5b43;color:#fff;box-shadow:0 4px 10px #0b5b4328}.mini-btn.complete-card:hover{background:linear-gradient(135deg,#084a37,#0f7555);color:#fff}
+  .step-responsible{display:inline-flex;margin:4px 0 6px;padding:3px 7px;border-radius:6px;background:#eaf5ef;color:#087a47;font-size:10px;font-weight:650}
+  .card-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.data-chip{font-size:9px;font-weight:700;color:#466057;background:#eef4f1;border:1px solid #dce7e1;border-radius:5px;padding:3px 7px}.data-chip.priority-alta,.data-chip.priority-crítica{background:#fff0f0;border-color:#f0caca;color:#a22}.data-chip.priority-média{background:#fff7e7;border-color:#f0dbab;color:#9a620c}
+  body.editing [data-editable="true"]{outline:1px dashed #c2a019;outline-offset:3px;border-radius:3px;cursor:text}
+  .edit-notice{display:none;background:#fff8d9;border:1px solid #ead36f;color:#715b00;border-radius:10px;padding:9px 12px;font-size:11px}.editing .edit-notice{display:block}
+  .modal-backdrop{display:none;position:fixed;inset:0;background:#09271dc4;backdrop-filter:blur(5px);z-index:100;align-items:center;justify-content:center;padding:20px}.modal-backdrop.open{display:flex}
+  .modal{width:min(760px,100%);max-height:92vh;overflow:auto;background:#fff;border-radius:18px;box-shadow:0 30px 80px #001b124f}
+  .modal-head{padding:19px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}.modal-head h3{font-size:16px}.modal-close{border:0;background:#eef3f0;width:30px;height:30px;border-radius:50%;cursor:pointer}
+  .modal-body{padding:20px 22px;display:grid;grid-template-columns:1fr 1fr;gap:14px}.field.full{grid-column:1/-1}.field label{display:block;font-size:9px;font-weight:750;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}.field input,.field select,.field textarea{width:100%;border:1px solid #cfdcd4;border-radius:9px;padding:10px 11px;font:12px Inter,sans-serif;color:var(--text);background:#fff}.field textarea{min-height:82px;resize:vertical}
+  .modal-foot{padding:15px 22px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}.modal-foot button{border:1px solid var(--border);background:#fff;border-radius:9px;padding:10px 14px;font:700 11px Inter,sans-serif;cursor:pointer}.modal-foot .save{background:#087a47;border-color:#087a47;color:#fff}
+  .save-state{font-size:10px;color:#d8eee2;margin-left:auto;opacity:.9}
+  @media(max-width:1080px){header{align-items:center}.header-stats{order:3;width:100%}.chart-grid{grid-template-columns:1fr}.brand-lockup{min-width:0}.header-copy{display:none}}
+  @media(max-width:650px){.modal-body{grid-template-columns:1fr}.field.full{grid-column:auto}.header-actions{width:100%}.action-btn{flex:1}.donut-wrap{flex-direction:column}.age-chart{gap:8px}}
+  @media print{body{background:#fff}.header-actions,.toolbar,.edit-tools,.edit-notice,.modal-backdrop{display:none!important}header{background:#064c35!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}.dashboard-shell,main{max-width:none;padding:12px}.card{break-inside:avoid}.timeline-wrap{display:block!important}.resolved-list{display:block!important}.dashboard-grid{grid-template-columns:repeat(4,1fr)}.insight-grid,.chart-grid{grid-template-columns:1fr 1fr}.panel,.kpi{box-shadow:none}}
+  /* Identidade oficial extraída do Painel CSAT New Line */
+  :root{--green:#063d2d;--green2:#0b5b43;--lime:#9bc53d;--gold:#d4a928;--ink:#15211d;--muted:#697771;--line:#dfe7e3;--paper:#fff;--bg:#f3f6f4;--red:#c74343;--orange:#dc851f;--shadow:0 12px 30px rgba(13,48,37,.09);--accent:var(--green2);--success:var(--green2);--warn:var(--orange);--danger:var(--red);--text:var(--ink);--border:var(--line);--surface:var(--paper);--surface2:#f6f9f7}
+  body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 Inter,Segoe UI,Arial,sans-serif}
+  header{background:linear-gradient(120deg,#042d22,#0b5b43);padding:20px max(28px,calc((100% - 1500px)/2)) 24px;border-bottom:5px solid var(--gold);box-shadow:none;align-items:center}
+  .brand-lockup{gap:20px}.brand-lockup .official-logo{width:184px;height:auto;filter:drop-shadow(0 3px 8px #0018)}.brand-mark,.brand-name,.brand-sub{display:none}.header-copy{height:46px;display:flex;flex-direction:column;justify-content:center}.header-copy h1{font-size:21px;margin:0 0 3px}.header-title{display:none}.header-date{font-size:12px;color:#d5e6df;margin:0}
+  .header-stats{display:none}.action-btn{border:1px solid #ffffff32;background:#ffffff13}.action-btn.primary{background:var(--gold);border-color:var(--gold);color:#172219}
+  .dashboard-shell,main{max-width:1500px}.dashboard-shell{padding-top:22px}
+  .dashboard-grid{grid-template-columns:repeat(5,1fr);gap:14px;margin:0 0 14px}.kpi{border-radius:14px;padding:17px 18px;box-shadow:var(--shadow)}.kpi:after{background:#9bc53d18}.kpi-value{color:var(--green)!important}.kpi-label{font-size:12px;letter-spacing:0;text-transform:none}.kpi-note{color:#87928d}
+  .panel{border-radius:14px;box-shadow:var(--shadow)}.age-column i{background:linear-gradient(#9bc53d,#0b5b43)}.priority-box{background:#f6f9f7;border-color:var(--line);border-left:4px solid var(--lime)}.priority-box strong{color:var(--green)}
+  .toolbar{top:58px;border-radius:14px;box-shadow:var(--shadow)}
+  .workspace-nav{position:sticky;top:0;z-index:40;background:#fff;border-bottom:1px solid var(--line);box-shadow:0 4px 18px #0d302510}
+  .workspace-nav-inner{max-width:1500px;margin:auto;padding:0 28px;display:flex;gap:5px;align-items:center}
+  .view-tab{border:0;border-bottom:3px solid transparent;background:transparent;color:var(--muted);border-radius:0;padding:15px 18px 12px;font:750 11px Inter,sans-serif;cursor:pointer}.view-tab.active{color:var(--green);border-bottom-color:var(--gold)}
+  .nav-summary{margin-left:auto;font-size:10px;color:var(--muted)}
+  body[data-view="dashboard"] main{display:none}body[data-view="management"] .dashboard-shell{display:none}
+  .auto-insights{margin-top:14px}.auto-insights .panel-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}.auto-insights .panel-head h2{font-size:15px;margin:0}.auto-insights .panel-head small{color:var(--muted)}
+  .insight-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.auto-insight{background:#f6f9f7;border-left:4px solid var(--lime);padding:13px;border-radius:8px;font-size:12px;color:#42554d}.auto-insight strong{display:block;color:var(--green);margin-bottom:4px}
+  @media(max-width:1000px){.dashboard-grid{grid-template-columns:repeat(2,1fr)}.brand-lockup .official-logo{width:145px}.header-copy{border-left:0;padding-left:0}.workspace-nav-inner{overflow:auto}.insight-cards{grid-template-columns:1fr}.nav-summary{display:none}}
+  @media(max-width:600px){.dashboard-grid{grid-template-columns:1fr}.brand-lockup{flex-wrap:wrap}.header-copy{display:none}.workspace-nav-inner{padding:0 14px}.view-tab{white-space:nowrap}}
+  /* New Line Viva — contraste, profundidade e leitura por criticidade */
+  body{background:
+    radial-gradient(circle at 8% 8%,rgba(155,197,61,.13),transparent 25%),
+    radial-gradient(circle at 92% 22%,rgba(212,169,40,.10),transparent 22%),
+    linear-gradient(180deg,#edf5f0 0,#f6f8f7 520px,#f1f5f3 100%)}
+  header{position:relative;overflow:hidden;background:
+    radial-gradient(circle at 18% -70%,rgba(155,197,61,.25),transparent 38%),
+    radial-gradient(circle at 85% 160%,rgba(212,169,40,.18),transparent 32%),
+    linear-gradient(120deg,#03271d 0,#064631 45%,#0b6549 100%)}
+  header:after{content:"";position:absolute;right:5%;top:-90px;width:280px;height:280px;border:1px solid #ffffff12;border-radius:50%;box-shadow:0 0 0 38px #ffffff08,0 0 0 76px #ffffff05;pointer-events:none}
+  .official-logo,.header-copy,.header-actions{position:relative;z-index:1}.official-logo{transition:transform .3s,filter .3s}.official-logo:hover{transform:translateY(-2px) scale(1.015);filter:drop-shadow(0 7px 14px #001b)}
+  .workspace-nav{background:#fffffff2;backdrop-filter:blur(14px)}.view-tab{transition:color .2s,background .2s}.view-tab:hover{color:var(--green);background:#edf6f1}
+  .dashboard-grid .kpi{min-height:128px;border:0;border-top:4px solid var(--tone);background:
+    radial-gradient(circle at 96% 0,var(--wash),transparent 38%),#fff;transition:transform .25s,box-shadow .25s}
+  .dashboard-grid .kpi:hover{transform:translateY(-5px);box-shadow:0 18px 38px rgba(13,48,37,.16)}
+  .dashboard-grid .kpi:before{content:var(--symbol);position:absolute;right:17px;top:17px;width:34px;height:34px;display:grid;place-items:center;border-radius:10px;background:var(--wash);color:var(--tone);font-size:17px;font-weight:900}
+  .dashboard-grid .kpi:after{width:105px;height:105px;right:-42px;top:-50px;background:var(--tone);opacity:.07}
+  .dashboard-grid .kpi:nth-child(1){--tone:#0b5b43;--wash:#dff2e9;--symbol:"●"}
+  .dashboard-grid .kpi:nth-child(2){--tone:#c74343;--wash:#ffe6e6;--symbol:"!"}
+  .dashboard-grid .kpi:nth-child(3){--tone:#dc851f;--wash:#fff0d8;--symbol:"?"}
+  .dashboard-grid .kpi:nth-child(4){--tone:#d4a928;--wash:#fff6cf;--symbol:"↻"}
+  .dashboard-grid .kpi:nth-child(5){--tone:#79a725;--wash:#edf6d8;--symbol:"◷"}
+  .dashboard-grid .kpi .kpi-value{color:var(--tone)!important;font-size:34px;text-shadow:0 8px 18px var(--wash)}
+  .dashboard-grid .kpi .kpi-label{color:#41564d}.dashboard-grid .kpi .kpi-note{font-size:10px}
+  .panel{border:1px solid #dbe7e1;box-shadow:0 12px 32px rgba(13,48,37,.10);transition:box-shadow .25s}.panel:hover{box-shadow:0 16px 38px rgba(13,48,37,.13)}
+  .panel-title,.panel-head h2{color:#153f31}.panel-title:before,.panel-head h2:before{content:"";display:inline-block;width:4px;height:14px;border-radius:4px;background:linear-gradient(var(--lime),var(--green2));margin-right:8px;vertical-align:-2px}
+  .bar-track{height:11px;box-shadow:inset 0 1px 3px #143d2920}.bar-fill{background-image:linear-gradient(90deg,#0b5b43,#9bc53d)!important;animation:growBar .8s ease-out both;transform-origin:left}
+  .age-column i{animation:riseBar .8s cubic-bezier(.2,.8,.2,1) both;transform-origin:bottom;box-shadow:0 7px 16px rgba(11,91,67,.25)}
+  .age-column:nth-child(2) i{background:linear-gradient(#d7cf35,#4f9138)}.age-column:nth-child(3) i{background:linear-gradient(#efb632,#dc851f)}.age-column:nth-child(4) i{background:linear-gradient(#ed6b57,#b83434)}
+  .donut{box-shadow:0 12px 28px rgba(13,48,37,.16),inset 0 0 0 1px #ffffff80;animation:donutIn .7s ease-out both}
+  .donut:after{box-shadow:inset 0 3px 12px #153d2920}.donut-center b{color:var(--green);font-size:30px}
+  .auto-insight{position:relative;overflow:hidden;min-height:94px;padding:16px 16px 15px 54px;border-left:0;border-top:3px solid var(--insight);background:linear-gradient(135deg,var(--insightWash),#fff);box-shadow:0 7px 18px #123e2b0c}
+  .auto-insight:before{content:var(--insightIcon);position:absolute;left:15px;top:17px;width:27px;height:27px;border-radius:8px;display:grid;place-items:center;background:var(--insight);color:#fff;font-weight:900}
+  .auto-insight:nth-child(1){--insight:#c74343;--insightWash:#fff1f1;--insightIcon:"!"}.auto-insight:nth-child(2){--insight:#dc851f;--insightWash:#fff5e7;--insightIcon:"@"}.auto-insight:nth-child(3){--insight:#d4a928;--insightWash:#fff9df;--insightIcon:"↻"}.auto-insight strong{color:#173f31;font-size:13px}
+  .toolbar{border:0;border-top:3px solid var(--gold);box-shadow:0 12px 30px rgba(13,48,37,.13)}.filter-btn{transition:.2s}.filter-btn:hover,.filter-btn.active{background:linear-gradient(135deg,#dff2e9,#edf8e5);box-shadow:0 5px 12px #0b5b4318;transform:translateY(-1px)}
+  .card{position:relative;border-left:6px solid #9eada5;box-shadow:0 8px 22px rgba(13,48,37,.08);transition:transform .22s,box-shadow .22s,border-color .22s}
+  .card:hover{transform:translateY(-3px);box-shadow:0 15px 32px rgba(13,48,37,.14)}
+  .card.risk-today{border-left-color:#c74343;background:linear-gradient(90deg,#fff5f5 0,#fff 15%)}.card.risk-none{border-left-color:#dc851f;background:linear-gradient(90deg,#fff9ef 0,#fff 15%)}.card.risk-extended{border-left-color:#d4a928}.card.risk-ok{border-left-color:#79a725}
+  .card.risk-today .card-name{color:#8f2929}.card-name{font-size:16px}.card-id{letter-spacing:.02em}.data-chip{box-shadow:0 2px 5px #153d2910}
+  .age-bar{box-shadow:0 5px 13px #153d2912}.prazo-badge{box-shadow:0 4px 11px #153d2910}
+  .action-btn{transition:transform .2s,background .2s,box-shadow .2s}.action-btn:hover{transform:translateY(-2px);box-shadow:0 8px 18px #0015}.action-btn.primary{box-shadow:0 7px 16px #1c1a0025}
+  .save-state.saved-flash{animation:savedFlash 1.4s ease}.mini-btn{transition:.2s}.mini-btn:hover{transform:translateY(-1px);box-shadow:0 4px 10px #0b5b4318}
+  .timeline::before{background:linear-gradient(var(--green2),var(--line))}.step-dot{box-shadow:0 0 0 3px #fff}
+  .risk-legend{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin:12px 2px 20px;font-size:10px;color:var(--muted)}.risk-legend span{display:flex;align-items:center;gap:6px}.risk-legend i{width:9px;height:9px;border-radius:3px;box-shadow:0 2px 5px #153d2920}
+  @keyframes growBar{from{transform:scaleX(0)}to{transform:scaleX(1)}}@keyframes riseBar{from{transform:scaleY(0);opacity:.3}to{transform:scaleY(1);opacity:1}}@keyframes donutIn{from{transform:scale(.82) rotate(-18deg);opacity:.3}to{transform:none;opacity:1}}@keyframes savedFlash{0%,100%{color:#d8eee2}35%{color:#ffe56f;text-shadow:0 0 12px #ffe56f}}
+  @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand-lockup">
+    <img class="official-logo" id="brandLogo" alt="New Line Segurança e Tecnologia">
+    <div class="header-copy">
+    <div class="header-title">Relatório SAC · Equipe Manutenção</div>
+    <h1>Atendimentos Abertos Sem Solução</h1>
+    <div class="header-date">📅 29 de julho de 2026 — Atualizado hoje</div>
+    </div>
+  </div>
+  <div class="header-stats">
+    <div class="stat-pill p"><span class="num">5</span><span class="lbl">Portaria</span></div>
+    <div class="stat-pill v"><span class="num">7</span><span class="lbl">Varejo</span></div>
+    <div class="stat-pill tot"><span class="num">12</span><span class="lbl">Total</span></div>
+  </div>
+  <div class="header-actions">
+    <button class="action-btn" id="edit-mode">Editar informações</button>
+    <button class="action-btn" id="export-excel">Exportar Excel</button>
+    <button class="action-btn" id="export-pdf">Exportar PDF</button>
+    <button class="action-btn primary" id="new-record">+ Novo registro</button>
+    <span class="save-state" id="save-state">Base carregada</span>
+  </div>
+</header>
+<nav class="workspace-nav" aria-label="Áreas do painel">
+  <div class="workspace-nav-inner">
+    <button class="view-tab active" data-view-target="dashboard">Visão executiva</button>
+    <button class="view-tab" data-view-target="management">Gestão dos chamados</button>
+    <span class="nav-summary">Qualidade e Melhoria Contínua · análise interativa e editável</span>
+  </div>
+</nav>
+<section class="dashboard-shell" aria-label="Resumo executivo">
+  <div class="dashboard-grid">
+    <article class="kpi" style="--kpi-color:#087a47"><div class="kpi-label">Atendimentos abertos</div><div class="kpi-value" id="kpi-open">15</div><div class="kpi-note">Portaria e Varejo</div></article>
+    <article class="kpi" style="--kpi-color:#d84545"><div class="kpi-label">Prazo hoje</div><div class="kpi-value" id="kpi-today">6</div><div class="kpi-note">Exigem acompanhamento imediato</div></article>
+    <article class="kpi" style="--kpi-color:#e58b18"><div class="kpi-label">Sem prazo</div><div class="kpi-value" id="kpi-none">4</div><div class="kpi-note">Risco de perda de controle</div></article>
+    <article class="kpi" style="--kpi-color:#7657c8"><div class="kpi-label">Prorrogados</div><div class="kpi-value" id="kpi-extended">6</div><div class="kpi-note">Demandam revisão de causa</div></article>
+    <article class="kpi"><div class="kpi-label">Tempo médio em aberto</div><div class="kpi-value" id="kpi-average-age">11,4</div><div class="kpi-note">dias por chamado</div></article>
+  </div>
+  <div class="insight-grid">
+    <article class="panel">
+      <div class="panel-title">Distribuição por equipe</div>
+      <div class="segment-row"><span>Portaria</span><div class="bar-track"><div class="bar-fill" id="bar-portaria" style="width:47%;background:var(--portaria)"></div></div><b id="count-portaria">7</b></div>
+      <div class="segment-row"><span>Varejo</span><div class="bar-track"><div class="bar-fill" id="bar-varejo" style="width:53%;background:var(--varejo)"></div></div><b id="count-varejo">8</b></div>
+    </article>
+    <article class="panel">
+      <div class="panel-title">Situação dos prazos</div>
+      <div class="deadline-legend">
+        <div class="legend-item"><span class="legend-dot" style="background:var(--danger)"></span>Hoje <b id="legend-today">6</b></div>
+        <div class="legend-item"><span class="legend-dot" style="background:var(--warn)"></span>Amanhã <b id="legend-tomorrow">3</b></div>
+        <div class="legend-item"><span class="legend-dot" style="background:var(--success)"></span>Futuro <b id="legend-future">2</b></div>
+        <div class="legend-item"><span class="legend-dot" style="background:#8a998f"></span>Sem prazo <b id="legend-none">4</b></div>
+      </div>
+    </article>
+    <article class="panel">
+      <div class="panel-title">Leitura gerencial</div>
+      <div class="priority-box"><strong>Prioridade do dia</strong><p>Atuar primeiro nos chamados com prazo para hoje e formalizar prazo para os casos ainda sem definição. As prorrogações devem ser acompanhadas pela causa, não apenas pela nova data.</p></div>
+    </article>
+  </div>
+  <div class="chart-grid">
+    <article class="panel">
+      <div class="panel-title">Chamados por tempo em aberto</div>
+      <div class="age-chart" id="age-chart"></div>
+    </article>
+    <article class="panel">
+      <div class="panel-title">Composição dos prazos</div>
+      <div class="donut-wrap">
+        <div class="donut" id="deadline-donut"><div class="donut-center"><b id="donut-total">15</b><span>abertos</span></div></div>
+        <div class="donut-key">
+          <div><i class="legend-dot" style="background:var(--danger)"></i><span>Prazo hoje</span><b id="donut-today">6</b></div>
+          <div><i class="legend-dot" style="background:var(--warn)"></i><span>Prazo amanhã</span><b id="donut-tomorrow">3</b></div>
+          <div><i class="legend-dot" style="background:var(--success)"></i><span>Prazo futuro</span><b id="donut-future">2</b></div>
+          <div><i class="legend-dot" style="background:#9aa89f"></i><span>Sem prazo</span><b id="donut-none">4</b></div>
+        </div>
+      </div>
+    </article>
+  </div>
+  <article class="panel auto-insights">
+    <div class="panel-head"><h2>Leitura gerencial automática</h2><small>atualizada conforme os registros</small></div>
+    <div class="insight-cards">
+      <div class="auto-insight"><strong>Prioridade operacional</strong><span id="insight-priority">6 chamados possuem prazo para hoje.</span></div>
+      <div class="auto-insight"><strong>Governança das ações</strong><span id="insight-owners">Existem ações sem responsável definido.</span></div>
+      <div class="auto-insight"><strong>Risco de recorrência</strong><span id="insight-extensions">6 chamados já tiveram prorrogação.</span></div>
+    </div>
+  </article>
+</section>
+<main>
+<div class="toolbar" aria-label="Filtros do dashboard">
+  <input class="search-box" id="search" type="search" placeholder="Buscar cliente, OS, descrição ou responsável…">
+  <button class="filter-btn active" data-filter="all">Todos</button>
+  <button class="filter-btn" data-filter="today">Prazo hoje</button>
+  <button class="filter-btn" data-filter="none">Sem prazo</button>
+  <button class="filter-btn" data-filter="extended">Prorrogados</button>
+  <span class="result-count" id="result-count">15 chamados</span>
+</div>
+<div class="empty-state" id="empty-state">Nenhum chamado encontrado com os filtros selecionados.</div>
+<div class="edit-notice">Modo de edição ativo: clique nos textos destacados para alterar. As modificações são salvas automaticamente neste navegador.</div>
+<div class="risk-legend" aria-label="Legenda de criticidade"><span><i style="background:#c74343"></i>Prazo hoje ou vencido</span><span><i style="background:#dc851f"></i>Sem prazo definido</span><span><i style="background:#d4a928"></i>Prorrogado</span><span><i style="background:#79a725"></i>Dentro do prazo</span></div>
+<div id="records-root">
+
+<!-- ══════════════ PORTARIA ══════════════ -->
+<div class="section-label">
+  <span class="section-dot" style="background:var(--portaria)"></span>
+  <h2>Equipe Manutenção Portaria</h2>
+  <div class="section-line"></div>
+</div>
+
+<!-- CARD 1: JOSE HERMANO SOBRINHO -->
+<div class="card" id="c1">
+  <div class="card-header" onclick="toggle('c1')">
+    <div class="card-meta">
+      <div class="card-id">OS 86387 · Abertura: 26/06/2026</div>
+      <div class="card-name">1451 — Condomínio Residencial José Hermano Sobrinho</div>
+      <div class="card-desc">Cerca elétrica concluída — interfones em andamento. Prazo ajustado para 29/07.</div>
+    </div>
+    <div class="card-right">
+      <div class="age-bar age-old"><span class="age-num">33</span><div class="age-label"><span>aberto há</span><span>dias</span></div></div>
+      <div class="prazo-badge today">🔴 Prazo: HOJE 29/07</div>
+      <div class="prorrog-badge">↻ 3ª prorrogação</div>
+      <div class="update-count"><div class="dot-row"><span class="dot-warn"></span><span class="dot-done"></span><span class="dot-done"></span><span class="dot-warn"></span><span class="dot-warn"></span><span class="dot-warn"></span></div>Interfones em andamento</div>
+      <div class="toggle-btn">ver histórico <svg fill="none" viewBox="0 0 10 6" width="10" height="6" stroke="currentColor" stroke-width="1.5"><path d="M1 1l4 4 4-4"/></svg></div>
+    </div>
+  </div>
+  <div class="timeline-wrap">
+    <div class="timeline-intro">Histórico completo do campo <strong>Status Atual</strong>.</div>
+    <div class="problem-box"><label>Descrição</label><p>Pendências técnicas sem solução há ~2 anos: câmera aguardando substituição, cabeamento sem uso, atendimentos sem resolução definitiva.</p></div>
+    <div class="abertura-row"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="6" r="5"/><path d="M6 3.5v2.5l1.5 1"/></svg>Abertura em <strong>26 de junho de 2026 às 08:43</strong></div>
+    <div class="timeline">
+      <div class="step type-action"><div class="step-dot"></div><div class="step-badge">Terceirizado · 04/07</div><div class="step-text">Terceirizado contratado, início 04/07. Upgrade em andamento. Renovação contratual em processo.</div></div>
+      <div class="step type-done"><div class="step-dot"></div><div class="step-badge">Cerca Elétrica · OK</div><div class="step-text">Cerca elétrica concluída.</div></div>
+      <div class="step type-waiting"><div class="step-dot"></div><div class="step-badge">Interfones · Em Andamento</div><div class="step-text">Intervenção nos interfones em andamento. Prazo 22/07 não finalizado.</div></div>
+      <div class="step type-new"><div class="step-dot"></div><div class="step-badge">✦ Prazo Ajustado · 29/07</div><div class="step-text">Prazo ajustado para finalização. <strong>Prazo: 29/07</strong> (3ª prorrogação: 17/07 → 22/07 → 29/07).</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- CARD 2: ACQUARELLE -->
+<div class="card" id="c2">
+  <div class="card-header" onclick="toggle('c2')">
+    <div class="card-meta">
+      <div class="card-id">OS 89329 · Abertura: 03/07/2026 <span class="csat-inline-tag">CSAT</span></div>
+      <div class="card-name">1369 — Cond. Resid. Acquarelle</div>
+      <div class="card-desc">Acrílico personalizado em confecção — prazo atualizado para 07/08.</div>
+    </div>
+    <div class="card-right">
+      <div class="age-bar age-medium"><span class="age-num">26</span><div class="age-label"><span>aberto há</span><span>dias</span></div></div>
+      <div class="prazo-badge future">📅 Prazo: 07/08</div>
+      <div class="prorrog-badge">↻ Prorrogado</div>
+      <div class="update-count"><div class="dot-row"><span class="dot-fail"></span><span class="dot-warn"></span><span class="dot-warn"></span><span class="dot-warn"></span></div>Acrílico pendente</div>
+      <div class="toggle-btn">ver histórico <svg fill="none" viewBox="0 0 10 6" width="10" height="6" stroke="currentColor" stroke-width="1.5"><path d="M1 1l4 4 4-4"/></svg></div>
+    </div>
+  </div>
+  <div class="timeline-wrap">
+    <div class="timeline-intro">Histórico do campo <strong>Status Atual</strong>.</div>
+    <div class="problem-box"><label>Descrição</label><p>CSAT. Acrílico do equipamento quebrado. OS 87952 fechada indevidamente. Acrílico personalizado (40×38cm + aba lateral esquerda) solicitado com urgência.</p></div>
+    <div class="abertura-row"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="6" r="5"/><path d="M6 3.5v2.5l1.5 1"/></svg>Abertura em <strong>03 de julho de 2026 às 08:43</strong></div>
+    <div class="timeline">
+      <div class="step type-alert"><div class="step-dot"></div><div class="step-badge">OS 87952 · Fechada Indevidamente</div><div class="step-text">Reaberta como OS 89329.</div></div>
+      <div class="step type-action"><div class="step-dot"></div><div class="step-badge">Confecção · Solicitada</div><div class="step-date">04/07/2026</div><div class="step-text">Acrílico personalizado em fabricação — departamento técnico acionado.</div></div>
+      <div class="step type-info"><div class="step-dot"></div><div class="step-badge">Síndico · Disponível 13–17/07</div><div class="step-text">Reunião com Luis (09/07). Síndico satisfeito com a Newline.</div></div>
+      <div class="step type-new"><div class="step-dot"></div><div class="step-badge">✦ Prazo Atualizado · 07/08</div><div class="step-text">Acrílico ainda pendente. <strong>Novo prazo: 07/08</strong> (prorrogado de 18/07).</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- CARD 3: PANORAMIC RESIDENCE -->
+<div class="card" id="c3">
+  <div class="card-header" onclick="toggle('c3')">
+    <div class="card-meta">
+      <div class="card-id">OS 87981 · Abertura: 03/07/2026</div>
+      <div class="card-name">1381 — Condomínio Panoramic Residence</div>
+      <div class="card-desc">Manutenção preventiva em andamento — prazo atualizado para 30/07.</div>
+    </div>
+    <div class="card-right">
+      <div class="age-bar age-medium"><span class="age-num">26</span><div class="age-label"><span>aberto há</span><span>dias</span></div></div>
+      <div class="prazo-badge tomorrow">⚠ Prazo: 30/07</div>
+      <div class="prorrog-badge">↻ 5ª prorrogação</div>
+      <div class="update-count"><div class="dot-row"><span class="dot-done"></span><span class="dot-done"></span><span class="dot-done"></span><span class="dot-done"></span><span class="dot-done"></span><span class="dot-warn"></span></div>Preventiva em andamento</div>
+      <div class="toggle-btn">ver histórico <svg fill="none" viewBox="0 0 10 6" width="10" height="6" stroke="currentColor" stroke-width="1.5"><path d="M1 1l4 4 4-4"/></svg></div>
+    </div>
+  </div>
+  <div class="timeline-wrap">
+    <div class="timeline-intro">Histórico completo do campo <strong>Status Atual</strong>.</div>
+    <div class="problem-box"><label>Descrição</label><p>Falhas recorrentes no reconhecimento facial do Subsolo 2 – Ala B após 2 intervenções. Solicitita solução definitiva sem ônus.</p></div>
+    <div class="abertura-row"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="6" r="5"/><path d="M6 3.5v2.5l1.5 1"/></svg>Abertura em <strong>03 de julho de 2026 às 09:56</strong></div>
+    <div class="timeline">
+      <div class="step type-done"><div class="step-dot"></div><div class="step-badge">Anti-Spoof + Vistoria · 03/07</div><div class="step-text">Bateria verificada, Anti-Spoof atualizado via Kristian.</div></div>
+      <div class="step type-done"><div class="step-dot"></div><div class="step-badge">4 Placas Trocadas · Luis</div><div class="step-text">4 placas trocadas. Alimentação das faciais readequada.</div></div>
+      <div class="step type-done"><div class="step-dot"></div><div class="step-badge">Cadastro Facial · 10/07</div><div class="step-text">Cadastro facial iniciado.</div></div>
+      <div class="step type-done"><div class="step-dot"></div><div class="step-badge">Visita Luiz · 16/07</div><div class="step-text">Visita realizada pelo Luiz.</div></div>
+      <div class="step type-done"><div class="step-dot"></div><div class="step-badge">Em Andamento · 22/07</div><div class="step-text">Preventiva em andamento. Prazo 22/07 → 28/07.</div></div>
+      <div class="step type-new"><div class="step-dot"></div><div class="step-badge">✦ Prazo · 30/07</div><div class="step-text">Manutenção preventiva continua em andamento. <strong>Prazo: 30/07</strong> (5ª prorrogação).</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- CARD 4: PALCO VACA BRAVA -->
+<div class="card" id="c4">
+  <div class="card-header" onclick="toggle('c4')">
+    <div class="card-meta">
+      <div class="card-id">OS 90411 · Abertura: 14/07/2026</div>
+      <div class="card-name">1395 — Residencial Palco Vaca Brava</div>
+      <div class="card-desc">Visita do supervisor Luiz realizada — organização do Rack agendada para 07/08.</div>
+    </div>
+    <div class="card-right">
+      <div class="age-bar age-medium"><span class="age-num">15</span><div class="age-label"><span>aberto há</span><span>dias</span></div></div>
+      <div class="prazo-badge future">📅 Prazo: 07/08</div>
+      <div class="update-count"><div class="dot-row"><span class="dot-warn"></span><span class="dot-done"></span><span class="dot-warn"></span></div>Rack agendado 07/08</div>
+      <div class="toggle-btn">ver histórico <svg fill="none" viewBox="0 0 10 6" width="10" height="6" stroke="currentColor" stroke-width="1.5"><path d="M1 1l4 4 4-4"/></svg></div>
+    </div>
+  </div>
+  <div class="timeline-wrap">
+    <div class="timeline-intro">Histórico do campo <strong>Status Atual</strong>.</div>
+    <div class="problem-box"><label>Descrição</label><p>Síndico visitou outro condomínio da Newline, comparou o rack — o outro era novo, o seu antigo. Sente-se despriorizado como cliente mais antigo.</p></div>
+    <div class="abertura-row"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="6" r="5"/><path d="M6 3.5v2.5l1.5 1"/></svg>Abertura em <strong>14 de julho de 2026 às 18:01</strong></div>
+    <div class="timeline">
+      <div class="step type-action"><div class="step-dot"></div><div class="step-badge">SAC · Em Contato</div><div class="step-text">SAC em contato para compreender a solicitação.</div></div>
+      <div class="step type-done"><div class="step-dot"></div><div class="step-badge">Visita Supervisor Luiz · 23/07</div><div class="step-text">Visita realizada pelo supervisor Luiz.</div></div>
+      <div class="step type-new"><div class="step-dot"></div><div class="step-badge">✦ Rack Agendado · 07/08</div><div class="step-text">Organização do Rack agendada para <strong>07/08</strong>. Prazo: 07/08.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- CARD 5: PARQUE DOS FLAMBOYANT -->
+<div class="card" id="c5">
+  <div class="card-header" onclick="toggle('c5')">
+    <div class="card-meta">
+      <div class="card-id">OS 91035 · Abertura: 17/07/2026 <span class="new-tag">✦ Novo</span></div>
+      <div class="card-name">1503 — Condomínio Residencial Parque dos Flamboyant</div>
+      <div class="card-desc">3 câmeras com problema — câmera do 16º andar é do cliente (vai comprar), câmera do elevador agendada para hoje (29/07).</div>
+    </div>
+    <div class="card-right">
+      <div class="age-bar age-medium"><span class="age-num">12</span><div class="age-label"><span>aberto há</span><span>dias</span></div></div>
+      <div class="prazo-badge today">🔴 Prazo: HOJE 29/07</div>
+      <div class="update-count"><div class="dot-row"><span class="dot-warn"></span></div>Câmera elevador hoje</div>
+      <div class="toggle-btn">ver histórico <svg fill="none" viewBox="0 0 10 6" width="10" height="6" stroke="currentColor" stroke-width="1.5"><path d="M1 1l4 4 4-4"/></svg></div>
+    </div>
+  </div>
+  <div class="timeline-wrap">
+    <div class="timeline-intro">Histórico do campo <strong>Status Atual</strong>.</div>
+    <div class="problem-box"><label>Descrição</label><p>Síndico Frederico relata 3 câmeras com problemas: duas paradas e uma intermitente quando sem iluminação.</p></div>
+    <div class="abertura-row"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="6" r="5"/><path d="M6 3.5v2.5l1.5 1"/></svg>Abertura em <strong>17 de julho de 2026</strong></div>
+    <div class="timeline">
+      <div class="step type-info"><div class="step-dot"></div><div class="step-badge">Câmera 16º Andar · Cliente</div><div class="step-text">Câmera do 16º andar é de propriedade do cliente — o síndico vai adquirir o equipamento e a Newline realizará a instalação.</div></div>
+      <div class="step type-scheduled"><div class="step-dot"></div><div class="step-badge">Câmera Elevador · Hoje</div><div class="step-date">29/07/2026</div><div class="step-text">Câmera do elevador agendada para <strong>hoje (29/07)</strong>. Prazo: 29/07.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- CARD 6: GOLDEN GATE (nova OS detrator) -->
+<div class="card" id="c6">
+  <div class="card-header" onclick="toggle('c6')">
+    <div class="card-meta">
+      <div class="card-id">OS 93089 · Abertura: 27/07/2026 <span class="new-tag">✦ Novo</span></div>
+      <div class="card-name">Golden Gate</div>
+      <div class="card-desc">Detrator — problema maior sempre foi o monitor. Síndico terceirizado Aladio. Levar solução de alimentação dos monitores. Discutir em reunião operacional hoje.</div>
+    </div>
+    <div class="card-right">
+      <div class="age-bar age-fresh"><span class="age-num">2</span><div class="age-label"><span>aberto há</span><span>dias</span></div></div>
+      <div class="prazo-badge none">Sem prazo definido</div>
+      <div class="update-count"><div class="dot-row"><span class="dot-muted"></span></div>Reunião operacional hoje</div>
+      <div class="toggle-btn">ver histórico <svg fill="none" viewBox="0 0 10 6" width="10" height="6" stroke="currentColor" stroke-width="1.5"><path d="M1 1l4 4 4-4"/></svg></div>
+    </div>
+  </div>
+  <div class="timeline-wrap">
+    <div class="timeline-intro">Histórico do campo <strong>Status Atual</strong>.</div>
+    <div class="problem-box"><label>Descrição</label><p>Cliente detrator. Problema maior sempre foi o monitor. Síndico terceirizado: Aladio. Necessário levar solução de alimentação dos monitores.</p></div>
+    <div class="abertura-row"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="6" r="5"/><path d="M6 3.5v2.5l1.5 1"/></svg>Abertura em <strong>27 de julho de 2026</strong></div>
+    <div class="timeline">
+      <div class="step type-scheduled"><div class="step-dot"></div><div class="step-badge">Reunião Operacional · Hoje</div><div class="step-date">29/07/2026</div><div class="step-text">Discutir caso na <strong>reunião operacional do dia 29/07</strong>. Sem prazo definido.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- CARD 7: SUICA PARK -->
+<div class="card" id="c7">
+  <div class="card-header" onclick="toggle('c7')">
+    <div class="card-meta">
+      <div class="card-id">OS 92652 · Abertura: 24/07/2026 <span class="new-tag">✦ Novo</span></div>
+      <div class="card-name">7831 — Edifício Suíça Park</div>
+      <div class="card-desc">Vistoria reprovada — câmera para armário inteligente e 2 câmeras do subsolo sem canal. Gestora Rose em contato com síndica hoje.</div>
+    </div>
+    <div class="card-right">
+      <div class="age-bar age-fresh"><span class="age-num">5</span><div class="age-label"><span>aberto há</span><span>dias</span></div></div>
+      <div class="prazo-badge today">🔴 Prazo: HOJE 29/07</div>
+      <div class="update-count"><div class="dot-row"><span class="dot-warn"></span></div>Contato comercial hoje</div>
+      <div class="toggle-btn">ver histórico <svg fill="none" viewBox="0 0 10 6" width="10" height="6" stroke="currentColor" stroke-width="1.5"><path d="M1 1l4 4 4-4"/></svg></div>
+    </div>
+  </div>
+  <div class="timeline-wrap">
+    <div class="timeline-intro">Histórico do campo <strong>Status Atual</strong>.</div>
+    <div class="problem-box"><label>Descrição — Vistoria Reprovada</label><p>Falta câmera para armário inteligente e 2 câmeras do subsolo sem funcionar por falta de canal disponível no DVR.</p></div>
+    <div class="abertura-row"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="6" r="5"/><path d="M6 3.5v2.5l1.5 1"/></svg>Abertura em <strong>24 de julho de 2026</strong></div>
+    <div class="timeline">
+      <div class="step type-scheduled"><div class="step-dot"></div><div class="step-badge">Contato · Rose · Hoje</div><div class="step-date">29/07/2026</div><div class="step-text">Gestora <strong>Rose fará contato com a síndica hoje (29/07)</strong> para negociar solução. Prazo: 29/07.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- RESOLVIDOS PORTARIA -->
+<div class="resolved-section" id="res-p">
+  <div class="resolved-toggle" onclick="toggleResolved('res-p')">
+    <div style="width:8px;height:8px;border-radius:50%;background:var(--success);flex-shrink:0"></div>
+    <h3>✓ Chamados Resolvidos — Portaria (17)</h3>
+    <svg fill="none" viewBox="0 0 10 6" width="12" height="12" stroke="currentColor" stroke-width="1.5"><path d="M1 1l4 4 4-4"/></svg>
+  </div>
+  <div class="resolved-list">
+    <div class="resolved-item"><div class="resolved-check"><svg viewBox="0 0 10 8" fill="none" stroke="var(--success)" stroke-width="1.8"><path d="M1 4l3 3 5-6"/></svg></div><div class="resolved-info"><div class="resolved-name">1240 — Ed. Lago Azul · OS 84601</div><div class="resolved-detail">Upgrade completo finalizado. Entrega formal realizada. Prazo de validação 28/07. Resolvido — aguardando validação do cliente.</div><div class="resolved-date">✓ Resolvido em 29/07/2026</div></div></div>
+    <div class="resolved-item"><div class="resolved-check"><svg viewBox="0 0 10 8" fill="none" stroke="var(--success)" stroke-width="1.8"><path d="M1 4l3 3 5-6"/></svg></div><div class="resolved-info"><div class="resolved-name">1006 — Portal dos Jacarandás · OS 86379</div><div class="resolved-detail">Atendimento realizado em 17/07. Relatório técnico do Eng. Walter enviado ao síndico. Cliente não atendeu/respondeu — relatório enviado mesmo assim.</div><div class="resolved-date">✓ Resolvido em 24/07/2026</div></div></div>
+    <div class="resolved-item"><div class="resolved-check"><svg viewBox="0 0 10 8" fill="none" stroke="var(--success)" stroke-width="1.8"><path d="M1 4l3 3 5-6"/></svg></div><div class="resolved-info"><div class="resolved-name">1516 — Morada Goiá II · OS 87949 (CSAT)</div><div class="resolved-detail">Câmera trocada. Vistoria do supervisor Luiz realizada em 22/07. Resolvido — validar com cliente.</div><div class="resolved-date">✓ Resolvido em 22/07/2026</div></div></div>
+    <div class="resolved-item"><div class="resolved-check"><svg viewBox="0 0 10 8" fill="none" stroke="var(--success)" stroke-width="1.8"><path d="M1 4l3 3 5-6"/></svg></div><div class="resolved-info"><div class="resolved-name">9166 — Ed. Antares · OS 90042</div><div class="resolved-detail">Reestruturação completa dos portões. Nobreak remanejado. Entrega formal pelo supervisor Luiz em 21/07.</div><div class="resolved-date">✓ Resolvido em 21/07/2026</div></div></div>
+    <div class="resolved-item"><div class="resolved-check"><svg viewBox="0 0 10 8" fill="none" stroke="var(--success)" stroke-width="1.8"><path d="M1 4l3 3 5-6"/></svg></div><div class="resolved-info"><div class="resolved-name">1330 — Ed. Tucurui · OS 91950</div><div class="resolved-detail">Monitor do apto 103-A substituído dentro do prazo por Luiz.</div><div class="resolved-date">✓ Resolvido em 23/07/2026</div></div></div>
+    <div class="resolved-item"><div class="resolved-check"><svg viewBox="0 0 10 8" fill="none" stroke="var(--success)" stroke-width="1.8"><path d="M1 4l3 3 5-6"/></svg></div><div class="resolved-info"><div class="resolved-name">1352 — Ed. Pedra Branca · OS 87953 (CSAT)</div><div class="resolved-detail">Síndica desmarcou agendamento. Resolvido — validar com cliente.</div><div class="resolved-date">✓ Resolvido em 07/2026</div></div></div>
+    <div class="resolved-item"><div class="resolved-check"><svg viewBox="0 0 10 8" fill="none" stroke="var(--success)" stroke-width="1.8"><path d="M1 4l3 3 5-6"/></svg></div><div class="resolved-info"><div class="resolved-name">1429 — Alegria Santa Luzia · OS 85885</div><div class="resolved-detail">Atendimento realizado em 14/07 — acrílico e demais itens resolvidos. Validado.</div><div class="resolved-date">✓ Resolvido em 14/07/2026</div></div></div>
+    <div class="resolved-item"><div class="resolved-check"><svg viewBox="0 0 10 8" fill="none" stroke="var(--success)" stroke-width="1.8"><path d="M1 4l3 3 5-6"/></svg></div><div class="resolved-info"><div class="resolved-name">1073 — Djanira Santos · OS 87946 (CSAT)</div><div class="resolved-detail">E-mail de resposta enviado. Sem pendências. Hugo Camargo.</div><div class="resolved-date">✓ Resolvido em 07/07/2026</div></div></div>
+    <div class="resolved-item"><div class="resolved-check"><svg viewBox="0 0 10 8" fill="none" stroke="var(--success)" stroke-width="1.8"><path d="M1 4l3 3 5-6"/></svg></div><div class="resolved-info"><div class="resolved-name">0075 — Visconde Pirajá · OS 88740 (detrator)</div><div class="resolved-detail">Síndico validou — OK. Local em upgrade tecnológico.</div><div class="resolved-date">✓ Resolvido em 07/07/2026</div></div></div>
+    <div class="resolved-item"><div class="resolved-check"><svg viewBox="0 0 10 8" fill="none" stroke="var(--success)" stroke-width="1.8"><path d="M1 4l3 3 5-6"/></svg></div><div class="resolved-info"><div class="resolved-name">1500 — Roland Garros · OS 89328 (CSAT)</div><div class="resolved-detail">Kassia validou — síndica confirma OK.</div><div class="resolved-date">✓ Resolvido em 09/07/2026</div></div></div>
+    <div class="resolved-item"><div class="resolved-check"><svg viewBox="0 0 10 8" fill="none" stroke="var(--success)" stroke-width="1.8"><path d="M1 4l3 3 5-6"/></svg></div><div class="resolved-info"><div class="resolved-name">0802 — Golden Gate · OS 88738 (detrator)</div><div class="resolved-detail">Validado por Luis — OK. Preventiva 16/07.</div><div class="resolved-date">✓ Resolvido em 10/07/2026</div></div></div>
+    <div class="resolved-item"><div class="resolved-check"><svg viewBox="0 0 10 8" fill="none" stroke="var(--success)" stroke-width="1.8"><path d="M1 4l3 3 5-6"/></svg></div><div class="resolved-info"><div class="resolved-name">0581 — Alphaville · OS 88739 (detrator)</div><div class="resolved-detail">Validado por Luis — OK. Em upgrade tecnológico. Preventiva 14/07.</div><div class="resolved-date">✓ Resolvido em 10/07/2026</div></div></div>
+    <div class="resolved-item"><div class="resolved-check"><svg viewBox="0 0 10 8" fill="none" stroke="var(--success)" stroke-width="1.8"><path d="M1 4l3 3 5-6"/></svg></div><div class="resolved-info"><div class="resolved-name">1296 — Ed. Itália · OS 87955 (CSAT)</div><div class="resolved-detail">Kassia contactou síndico — OK.</div><div class="resolved-date">✓ Resolvido em 10/07/2026</div></div></div>
+    <div class="resolved-item"><div class="resolved-check"><svg viewBox="0 0 10 8" fill="none" stroke="var(--success)" stroke-width="1.8"><path d="M1 4l3 3 5-6"/></svg></div><div class="resolved-info"><div class="resolved-name">1165 — Flor do Ipê · OS 87956 (CSAT)</div><div class="resolved-detail">Heloisa visitou — 10 moradores testados, chamadas normais. Validado por Luis.</div><div class="resolved-date">✓ Resolvido em 10/07/2026</div></div></div>
+    <div class="resolved-item"><div class="resolved-check"><svg viewBox="0 0 10 8" fill="none" stroke="var(--success)" stroke-width="1.8"><path d="M1 4l3 3 5-6"/></svg></div><div class="resolved-info"><div class="resolved-name">0766 — Solar da Serra · OS 76569</div><div class="resolved-detail">Telha substituída por Luiz Augusto e Fabiano.</div><div class="resolved-date">✓ Resolvido em 01/07/2026</div></div></div>
+    <div class="resolved-item"><div class="resolved-check"><svg viewBox="0 0 10 8" fill="none" stroke="var(--success)" stroke-width="1.8"><path d="M1 4l3 3 5-6"/></svg></div><div class="resolved-info"><div class="resolved-name">1488 — Jardins do Cerrado · OS 86383</div><div class="resolved-detail">Molas das portas de vidro substituídas por terceirizado Adailton.</div><div class="resolved-date">✓ Resolvido em 02/07/2026</div></div></div>
+    <div class="resolved-item"><div class="resolved-check"><svg viewBox="0 0 10 8" fill="none" stroke="var(--success)" stroke-width="1.8"><path d="M1 4l3 3 5-6"/></svg></div><div class="resolved-info"><div class="resolved-name">1037 — Antonio Poteiro · OS 73012</div><div class="resolved-detail">Monitores sem português — orientações e material passo a passo fornecidos.</div><div class="resolved-date">✓ Resolvido em 24/06/2026</div></div></div>
+  </div>
+</div>
+
+<!-- ══════════════ VAREJO ══════════════ -->
+<div class="section-label">
+  <span class="section-dot" style="background:var(--varejo)"></span>
+  <h2>Equipe Manutenção Varejo</h2>
+  <div class="section-line"></div>
+</div>
+
+<!-- CARD V1: PRO DISTRIBUIDORA -->
+<div class="card" id="cv1">
+  <div class="card-header" onclick="toggle('cv1')">
+    <div class="card-meta">
+      <div class="card-id">OS 90564 · Abertura: 15/07/2026</div>
+      <div class="card-name">1933 / 1995 — Pro Distribuidora Ltda (2 unidades)</div>
+      <div class="card-desc">App com falhas impedindo arme/desarme — reagendado por 4ª vez para hoje (29/07).</div>
+    </div>
+    <div class="card-right">
+      <div class="age-bar age-medium"><span class="age-num">14</span><div class="age-label"><span>aberto há</span><span>dias</span></div></div>
+      <div class="prazo-badge today">🔴 Prazo: HOJE 29/07</div>
+      <div class="prorrog-badge">↻ 4ª prorrogação</div>
+      <div class="update-count"><div class="dot-row"><span class="dot-done"></span><span class="dot-fail"></span><span class="dot-fail"></span><span class="dot-fail"></span><span class="dot-warn"></span></div>Rogério vai hoje</div>
+      <div class="toggle-btn">ver histórico <svg fill="none" viewBox="0 0 10 6" width="10" height="6" stroke="currentColor" stroke-width="1.5"><path d="M1 1l4 4 4-4"/></svg></div>
+    </div>
+  </div>
+  <div class="timeline-wrap">
+    <div class="timeline-intro">Histórico do campo <strong>Status Atual</strong>.</div>
+    <div class="problem-box"><label>Descrição</label><p>Sr. Iure (TI, contas 1933 e 1995): falhas persistentes no app, arme/desarme impossibilitado com frequência. Troca de central prometida sem retorno. Caso escalado para diretoria do cliente.</p></div>
+    <div class="abertura-row"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="6" r="5"/><path d="M6 3.5v2.5l1.5 1"/></svg>Abertura em <strong>15 de julho de 2026 às 12:02</strong></div>
+    <div class="timeline">
+      <div class="step type-done"><div class="step-dot"></div><div class="step-badge">Técnico Gabriel · 21/07</div><div class="step-text">Atendimento realizado. Necessário novo atendimento do gestor.</div></div>
+      <div class="step type-fail"><div class="step-dot"></div><div class="step-badge">Rogério Reagendado · 23/07</div><div class="step-text">Gestor Rogério iria ao local — reagendado.</div></div>
+      <div class="step type-fail"><div class="step-dot"></div><div class="step-badge">Reagendado · 28/07</div><div class="step-text">Reagendado novamente para 28/07.</div></div>
+      <div class="step type-new"><div class="step-dot"></div><div class="step-badge">✦ Reagendado · Hoje 29/07</div><div class="step-text">Reagendado para <strong>hoje (29/07)</strong>. Prazo: 29/07 (4ª prorrogação: 20→23→28→29/07).</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- CARD V2: ARTUR CAMAPUM -->
+<div class="card" id="cv2">
+  <div class="card-header" onclick="toggle('cv2')">
+    <div class="card-meta">
+      <div class="card-id">OS 91895 · Abertura: 21/07/2026</div>
+      <div class="card-name">Artur Camapum Sociedade Individual de Advocacia</div>
+      <div class="card-desc">Nobreak — visita presencial realizada em 28/07. Passagem de cabo e instalação de fonte auxiliar agendados para 30/07.</div>
+    </div>
+    <div class="card-right">
+      <div class="age-bar age-fresh"><span class="age-num">8</span><div class="age-label"><span>aberto há</span><span>dias</span></div></div>
+      <div class="prazo-badge tomorrow">⚠ Prazo: 30/07</div>
+      <div class="prorrog-badge">↻ Prorrogado</div>
+      <div class="update-count"><div class="dot-row"><span class="dot-fail"></span><span class="dot-done"></span><span class="dot-warn"></span></div>Execução amanhã 30/07</div>
+      <div class="toggle-btn">ver histórico <svg fill="none" viewBox="0 0 10 6" width="10" height="6" stroke="currentColor" stroke-width="1.5"><path d="M1 1l4 4 4-4"/></svg></div>
+    </div>
+  </div>
+  <div class="timeline-wrap">
+    <div class="timeline-intro">Histórico do campo <strong>Status Atual</strong>.</div>
+    <div class="problem-box"><label>Descrição</label><p>Nobreak não instalado.</p></div>
+    <div class="abertura-row"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="6" r="5"/><path d="M6 3.5v2.5l1.5 1"/></svg>Abertura em <strong>21 de julho de 2026</strong></div>
+    <div class="timeline">
+      <div class="step type-fail"><div class="step-dot"></div><div class="step-badge">Prazo 22/07 · Não Cumprido</div><div class="step-text">Atendimento não realizado — necessária visita presencial Floriano/Rogério/Rodrigo.</div></div>
+      <div class="step type-done"><div class="step-dot"></div><div class="step-badge">Visita Presencial · 28/07</div><div class="step-date">28/07/2026</div><div class="step-text">Visita presencial realizada. Levantamento do serviço: passagem de cabo + instalação de 1 fonte auxiliar + cabo paralelo para interligação das câmeras no nobreak. Câmeras que ficarão no nobreak: frente, recepção, pátio, área gourmet e lateral.</div></div>
+      <div class="step type-new"><div class="step-dot"></div><div class="step-badge">✦ Execução · 30/07</div><div class="step-text">Serviço será realizado <strong>amanhã (30/07)</strong>. Prazo: 30/07.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- CARD V3: DONA PINK -->
+<div class="card" id="cv3">
+  <div class="card-header" onclick="toggle('cv3')">
+    <div class="card-meta">
+      <div class="card-id">Sem OS · Abertura: 17/07/2026</div>
+      <div class="card-name">Dona Pink</div>
+      <div class="card-desc">Câmera 1 em local inacessível (7m + marquise) — câmera 2 precisa reconfiguração de Wi-Fi. Prazo: 29/07.</div>
+    </div>
+    <div class="card-right">
+      <div class="age-bar age-medium"><span class="age-num">12</span><div class="age-label"><span>aberto há</span><span>dias</span></div></div>
+      <div class="prazo-badge today">🔴 Prazo: HOJE 29/07</div>
+      <div class="update-count"><div class="dot-row"><span class="dot-fail"></span><span class="dot-warn"></span></div>Novo atendimento com escada</div>
+      <div class="toggle-btn">ver histórico <svg fill="none" viewBox="0 0 10 6" width="10" height="6" stroke="currentColor" stroke-width="1.5"><path d="M1 1l4 4 4-4"/></svg></div>
+    </div>
+  </div>
+  <div class="timeline-wrap">
+    <div class="timeline-intro">Histórico do campo <strong>Status Atual</strong>.</div>
+    <div class="problem-box"><label>Descrição</label><p>Câmera 1 inoperante em local de ~7m de altura com marquise — solução: instalar nova câmera. Câmera 2 acessível com escada, sem defeito — precisa apenas reconfiguração de Wi-Fi (rede alterada). Técnico foi ao local sem escada, atendimento não concluído.</p></div>
+    <div class="abertura-row"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="6" r="5"/><path d="M6 3.5v2.5l1.5 1"/></svg>Abertura em <strong>17 de julho de 2026</strong></div>
+    <div class="timeline">
+      <div class="step type-fail"><div class="step-dot"></div><div class="step-badge">Falha · Técnico Sem Escada</div><div class="step-text">Técnico compareceu sem escada adequada — câmera 2 não reconfigurada.</div></div>
+      <div class="step type-new"><div class="step-dot"></div><div class="step-badge">✦ Prazo · Hoje 29/07</div><div class="step-text">Novo atendimento necessário com escada adequada. Prazo: 29/07.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- CARD V4: SHEKINAH (nova OS) -->
+<div class="card" id="cv4">
+  <div class="card-header" onclick="toggle('cv4')">
+    <div class="card-meta">
+      <div class="card-id">OS 92440 · Abertura: 23/07/2026 <span class="new-tag">✦ Novo</span></div>
+      <div class="card-name">9302 — Shekinah Cosméticos Ltda</div>
+      <div class="card-desc">Câmeras com oscilação, perda de sinal e instabilidade — problema comprovado em reunião presencial. Aguardando posição do cliente sobre passagem de cabos.</div>
+    </div>
+    <div class="card-right">
+      <div class="age-bar age-fresh"><span class="age-num">6</span><div class="age-label"><span>aberto há</span><span>dias</span></div></div>
+      <div class="prazo-badge none">Sem prazo definido</div>
+      <div class="update-count"><div class="dot-row"><span class="dot-done"></span><span class="dot-warn"></span></div>Aguardando cliente</div>
+      <div class="toggle-btn">ver histórico <svg fill="none" viewBox="0 0 10 6" width="10" height="6" stroke="currentColor" stroke-width="1.5"><path d="M1 1l4 4 4-4"/></svg></div>
+    </div>
+  </div>
+  <div class="timeline-wrap">
+    <div class="timeline-intro">Histórico do campo <strong>Status Atual</strong>.</div>
+    <div class="problem-box"><label>Descrição</label><p>Câmeras com oscilações, perda de sinal, câmera sem funcionar e instabilidade geral. Problema comprovado pessoalmente em reunião presencial. Acompanhado por Rogério, Floriano, Adriel e Cleber (comercial).</p></div>
+    <div class="abertura-row"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="6" r="5"/><path d="M6 3.5v2.5l1.5 1"/></svg>Abertura em <strong>23 de julho de 2026</strong></div>
+    <div class="timeline">
+      <div class="step type-done"><div class="step-dot"></div><div class="step-badge">Reunião · 24/07</div><div class="step-date">24/07/2026</div><div class="step-text">Reunião realizada com todas as equipes. Consultor Cleber enviará proposta do novo projeto.</div></div>
+      <div class="step type-new"><div class="step-dot"></div><div class="step-badge">✦ Aguardando Cliente · 28/07</div><div class="step-date">28/07/2026</div><div class="step-text">Aguardando posição do cliente sobre a <strong>passagem dos cabos</strong>. Sem prazo definido.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- CARD V5: MAIS LASER -->
+<div class="card" id="cv5">
+  <div class="card-header" onclick="toggle('cv5')">
+    <div class="card-meta">
+      <div class="card-id">OS 92805 · Abertura: 25/07/2026 <span class="new-tag">✦ Novo</span></div>
+      <div class="card-name">49920 / 0862 — Mais Laser</div>
+      <div class="card-desc">30 dias sem alarme — sirene sem bateria retirada para troca. Sra. Helloany ameaça ação judicial. Prazo: hoje 29/07.</div>
+    </div>
+    <div class="card-right">
+      <div class="age-bar age-fresh"><span class="age-num">4</span><div class="age-label"><span>aberto há</span><span>dias</span></div></div>
+      <div class="prazo-badge today">🔴 Prazo: HOJE 29/07</div>
+      <div class="update-count"><div class="dot-row"><span class="dot-done"></span><span class="dot-warn"></span></div>Sirene em cotação · sensores OK</div>
+      <div class="toggle-btn">ver histórico <svg fill="none" viewBox="0 0 10 6" width="10" height="6" stroke="currentColor" stroke-width="1.5"><path d="M1 1l4 4 4-4"/></svg></div>
+    </div>
+  </div>
+  <div class="timeline-wrap">
+    <div class="timeline-intro">Histórico do campo <strong>Status Atual</strong>.</div>
+    <div class="problem-box"><label>Descrição</label><p>Sra. Helloany solicitou cancelamento por problemas recorrentes. Sistema ficou ~30 dias sem funcionamento. Técnico desativou alarme deixando clínica sem proteção. Ameaça ação judicial e não pagou boleto de vencimento dia 10.</p></div>
+    <div class="abertura-row"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="6" r="5"/><path d="M6 3.5v2.5l1.5 1"/></svg>Abertura em <strong>25 de julho de 2026</strong></div>
+    <div class="timeline">
+      <div class="step type-done"><div class="step-dot"></div><div class="step-badge">Diagnóstico · Sensores OK</div><div class="step-text">Alarme funcionando normalmente segundo a recepcionista. Técnico testou todos os sensores — dispararam normalmente. Orientações repassadas à cliente.</div></div>
+      <div class="step type-new"><div class="step-dot"></div><div class="step-badge">✦ Sirene · Em Cotação</div><div class="step-text">Sirene do andar superior sem bateria — retirada para troca na Newline. Deixada com Letícia para cotação da bateria. Prazo: 29/07.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- CARD V6: MOISES MARTINS -->
+<div class="card" id="cv6">
+  <div class="card-header" onclick="toggle('cv6')">
+    <div class="card-meta">
+      <div class="card-id">OS 93130 · Abertura: 27/07/2026 <span class="new-tag">✦ Novo</span></div>
+      <div class="card-name">2966 — Moises Martins de Oliveira</div>
+      <div class="card-desc">Sem comunicação desde 13/05 — equipamentos retirados mas reinstalação não realizada. Faturamento indevido. Instalação agendada para 30/07.</div>
+    </div>
+    <div class="card-right">
+      <div class="age-bar age-fresh"><span class="age-num">2</span><div class="age-label"><span>aberto há</span><span>dias</span></div></div>
+      <div class="prazo-badge tomorrow">⚠ Prazo: 30/07</div>
+      <div class="prorrog-badge">↻ Prorrogado</div>
+      <div class="update-count"><div class="dot-row"><span class="dot-fail"></span><span class="dot-warn"></span></div>Instalação amanhã 30/07</div>
+      <div class="toggle-btn">ver histórico <svg fill="none" viewBox="0 0 10 6" width="10" height="6" stroke="currentColor" stroke-width="1.5"><path d="M1 1l4 4 4-4"/></svg></div>
+    </div>
+  </div>
+  <div class="timeline-wrap">
+    <div class="timeline-intro">Histórico do campo <strong>Status Atual</strong>.</div>
+    <div class="problem-box"><label>Descrição</label><p>Mudança de endereço — equipamentos retirados em 13/05/2026. Reinstalação no novo endereço não realizada até hoje. Faturamento em 05/2026 mesmo sem execução do serviço. Necessário ajustar datas dos boletos.</p></div>
+    <div class="abertura-row"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="6" r="5"/><path d="M6 3.5v2.5l1.5 1"/></svg>Abertura em <strong>27 de julho de 2026</strong></div>
+    <div class="timeline">
+      <div class="step type-fail"><div class="step-dot"></div><div class="step-badge">Tentativa · 28/07</div><div class="step-date">28/07/2026</div><div class="step-text">Instalação prevista para 28/07 pelo técnico Helder — prazo não cumprido.</div></div>
+      <div class="step type-new"><div class="step-dot"></div><div class="step-badge">✦ Reagendado · 30/07</div><div class="step-text">Previsão de atendimento para <strong>30/07</strong>. Boletos a ajustar. Prazo: 30/07.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- CARD V7: SPE QD B 12 -->
+<div class="card" id="cv7">
+  <div class="card-header" onclick="toggle('cv7')">
+    <div class="card-meta">
+      <div class="card-id">OS 92627 · Abertura: 24/07/2026 <span class="new-tag">✦ Novo</span></div>
+      <div class="card-name">2655 — SPE QD B 12</div>
+      <div class="card-desc">Arrombamento sem disparo para a central — cliente exige ressarcimento do valor furtado.</div>
+    </div>
+    <div class="card-right">
+      <div class="age-bar age-fresh"><span class="age-num">5</span><div class="age-label"><span>aberto há</span><span>dias</span></div></div>
+      <div class="prazo-badge none">Sem prazo definido</div>
+      <div class="update-count"><div class="dot-row"><span class="dot-fail"></span></div>Ressarcimento · sem resolução</div>
+      <div class="toggle-btn">ver histórico <svg fill="none" viewBox="0 0 10 6" width="10" height="6" stroke="currentColor" stroke-width="1.5"><path d="M1 1l4 4 4-4"/></svg></div>
+    </div>
+  </div>
+  <div class="timeline-wrap">
+    <div class="timeline-intro">Histórico do campo <strong>Status Atual</strong>.</div>
+    <div class="problem-box"><label>Descrição</label><p>Local vítima de arrombamento sem disparo de alarme para a central. Cliente exige ressarcimento do valor furtado.</p></div>
+    <div class="abertura-row"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="6" r="5"/><path d="M6 3.5v2.5l1.5 1"/></svg>Abertura em <strong>24 de julho de 2026</strong></div>
+    <div class="timeline">
+      <div class="step type-alert"><div class="step-dot"></div><div class="step-badge">⚠ Ressarcimento · Sem Resolução</div><div class="step-text">Cliente pedindo ressarcimento do valor furtado. <strong>Sem prazo definido e sem status registrado.</strong></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- CARD V8: PAROQUIA SAGRADO CORACAO -->
+<div class="card" id="cv8">
+  <div class="card-header" onclick="toggle('cv8')">
+    <div class="card-meta">
+      <div class="card-id">OS 93369 · Abertura: 28/07/2026 <span class="new-tag">✦ Novo</span></div>
+      <div class="card-name">0116 — Paróquia Sagrado Coração — Unidade III</div>
+      <div class="card-desc">Vistoria reprovada — DVR de 32 canais em cotação, câmera Wi-Fi sem internet do cliente. Aguardando retorno de Eduardo.</div>
+    </div>
+    <div class="card-right">
+      <div class="age-bar age-fresh"><span class="age-num">1</span><div class="age-label"><span>aberto há</span><span>dias</span></div></div>
+      <div class="prazo-badge none">Sem prazo definido</div>
+      <div class="update-count"><div class="dot-row"><span class="dot-muted"></span></div>Aguardando retorno Eduardo</div>
+      <div class="toggle-btn">ver histórico <svg fill="none" viewBox="0 0 10 6" width="10" height="6" stroke="currentColor" stroke-width="1.5"><path d="M1 1l4 4 4-4"/></svg></div>
+    </div>
+  </div>
+  <div class="timeline-wrap">
+    <div class="timeline-intro">Histórico do campo <strong>Status Atual</strong>.</div>
+    <div class="problem-box"><label>Descrição — Vistoria Reprovada</label><p>Duas pendências: (1) Instalação do DVR de 32 canais previsto em contrato ainda não realizada. (2) Câmera Wi-Fi não configurada — estabelecimento sem internet; Padre Ivan ciente de providenciar a rede Wi-Fi.</p></div>
+    <div class="abertura-row"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="6" r="5"/><path d="M6 3.5v2.5l1.5 1"/></svg>Abertura em <strong>28 de julho de 2026</strong></div>
+    <div class="timeline">
+      <div class="step type-action"><div class="step-dot"></div><div class="step-badge">DVR · Em Cotação</div><div class="step-text">DVR em cotação. Rogério identificou necessidade de alinhamento com time comercial.</div></div>
+      <div class="step type-waiting"><div class="step-dot"></div><div class="step-badge">Aguardando · Eduardo</div><div class="step-text">Randley de férias — direcionado para Eduardo. <strong>Aguardando retorno.</strong> Sem prazo definido.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- RESOLVIDOS VAREJO -->
+<div class="resolved-section" id="res-v">
+  <div class="resolved-toggle" onclick="toggleResolved('res-v')">
+    <div style="width:8px;height:8px;border-radius:50%;background:var(--success);flex-shrink:0"></div>
+    <h3>✓ Chamados Resolvidos — Varejo (24)</h3>
+    <svg fill="none" viewBox="0 0 10 6" width="12" height="12" stroke="currentColor" stroke-width="1.5"><path d="M1 1l4 4 4-4"/></svg>
+  </div>
+  <div class="resolved-list">
+    <div class="resolved-item"><div class="resolved-check"><svg viewBox="0 0 10 8" fill="none" stroke="var(--success)" stroke-width="1.8"><path d="M1 4l3 3 5-6"/></svg></div><div class="resolved-info"><div class="resolved-name">Transportes (sem conta)</div><div class="resolved-detail">Ameaça de cancelamento por exigência de assinatura de aditivo. Resolvido com assinatura de responsável local — contrato mantido.</div><div class="resolved-date">✓ Resolvido em 23/07/2026</div></div></div>
+    <div class="resolved-item"><div class="resolved-check"><svg viewBox="0 0 10 8" fill="none" stroke="var(--success)" stroke-width="1.8"><path d="M1 4l3 3 5-6"/></svg></div><div class="resolved-info"><div class="resolved-name">Wellington Angelo dos Reis · OS 91692</div><div class="resolved-detail">Alarme disparando ao ativar, sem câmeras há 30 dias — atendimento técnico realizado em 22/07.</div><div class="resolved-date">✓ Resolvido em 22/07/2026</div></div></div>
+    <div class="resolved-item"><div class="resolved-check"><svg viewBox="0 0 10 8" fill="none" stroke="var(--success)" stroke-width="1.8"><path d="M1 4l3 3 5-6"/></svg></div><div class="resolved-info"><div class="resolved-name">3955 — Antonio Valdeyris · OS 91798 e OS 92527</div><div class="resolved-detail">OS 91798 (reversão): atendimento realizado. OS 92527 (câmera 01): atendimento em 24/07 — validar com cliente.</div><div class="resolved-date">✓ Resolvido em 24/07/2026</div></div></div>
+    <div class="resolved-item"><div class="resolved-check"><svg viewBox="0 0 10 8" fill="none" stroke="var(--success)" stroke-width="1.8"><path d="M1 4l3 3 5-6"/></svg></div><div class="resolved-info"><div class="resolved-name">6031 — Viver Bem Empreendimento · OS 92566</div><div class="resolved-detail">Mudança de endereço — agendado para 27/07. Instalação realizada em 27/07.</div><div class="resolved-date">✓ Resolvido em 27/07/2026</div></div></div>
+    <div class="resolved-item"><div class="resolved-check"><svg viewBox="0 0 10 8" fill="none" stroke="var(--success)" stroke-width="1.8"><path d="M1 4l3 3 5-6"/></svg></div><div class="resolved-info"><div class="resolved-name">1494 — Spaco Agrícola Goiatuba · OS 92635</div><div class="resolved-detail">Vários dias em falha sem alarme — técnico no local em 24/07. Marisa acionada, próximos passos alinhados.</div><div class="resolved-date">✓ Resolvido em 24/07/2026</div></div></div>
+    <div class="resolved-item"><div class="resolved-check"><svg viewBox="0 0 10 8" fill="none" stroke="var(--success)" stroke-width="1.8"><path d="M1 4l3 3 5-6"/></svg></div><div class="resolved-info"><div class="resolved-name">9559 — EB Group · OS 92626</div><div class="resolved-detail">Vistoria reprovada — virada de 8 câmeras. Atendimento realizado em 27/07 dentro do prazo.</div><div class="resolved-date">✓ Resolvido em 27/07/2026</div></div></div>
+    <div class="resolved-item"><div class="resolved-check"><svg viewBox="0 0 10 8" fill="none" stroke="var(--success)" stroke-width="1.8"><path d="M1 4l3 3 5-6"/></svg></div><div class="resolved-info"><div class="resolved-name">9921 — Sind. Comércio Varejista · OS 93076</div><div class="resolved-detail">Vistoria reprovada — câmeras cadastradas, central com acesso às imagens. Resolvido em 27/07.</div><div class="resolved-date">✓ Resolvido em 27/07/2026</div></div></div>
+    <div class="resolved-item"><div class="resolved-check"><svg viewBox="0 0 10 8" fill="none" stroke="var(--success)" stroke-width="1.8"><path d="M1 4l3 3 5-6"/></svg></div><div class="resolved-info"><div class="resolved-name">5167 — Cred Consig · OS 93088</div><div class="resolved-detail">Reversão de cancelamento + mudança de endereço. Instalação realizada na Av. Pio XII.</div><div class="resolved-date">✓ Resolvido em 28/07/2026</div></div></div>
+    <div class="resolved-item"><div class="resolved-check"><svg viewBox="0 0 10 8" fill="none" stroke="var(--success)" stroke-width="1.8"><path d="M1 4l3 3 5-6"/></svg></div><div class="resolved-info"><div class="resolved-name">3948 — Rodrigo Silva Santos · OS 90785</div><div class="resolved-detail">Câmera sem localização — multa abonada. Rogério respondeu e-mail. E-mail validado — abono da multa confirmado.</div><div class="resolved-date">✓ Resolvido em 28/07/2026</div></div></div>
+    <div class="resolved-item"><div class="resolved-check"><svg viewBox="0 0 10 8" fill="none" stroke="var(--success)" stroke-width="1.8"><path d="M1 4l3 3 5-6"/></svg></div><div class="resolved-info"><div class="resolved-name">47279 — Wander Carlos Freitas Bueno · OS 87991</div><div class="resolved-detail">Notificação extrajudicial — equipamentos abonados. Resolvido.</div><div class="resolved-date">✓ Resolvido em 23/07/2026</div></div></div>
+    <div class="resolved-item"><div class="resolved-check"><svg viewBox="0 0 10 8" fill="none" stroke="var(--success)" stroke-width="1.8"><path d="M1 4l3 3 5-6"/></svg></div><div class="resolved-info"><div class="resolved-name">0703 — Cical Motonautica · OS 90628</div><div class="resolved-detail">3 sensores trocados. Abatimento proposto nas mensalidades.</div><div class="resolved-date">✓ Resolvido em 21/07/2026</div></div></div>
+    <div class="resolved-item"><div class="resolved-check"><svg viewBox="0 0 10 8" fill="none" stroke="var(--success)" stroke-width="1.8"><path d="M1 4l3 3 5-6"/></svg></div><div class="resolved-info"><div class="resolved-name">5566 — Maffeng Engenharia · OS 90380</div><div class="resolved-detail">Reinstalação dos sensores realizada dentro do prazo (16/07).</div><div class="resolved-date">✓ Resolvido em 16/07/2026</div></div></div>
+    <div class="resolved-item"><div class="resolved-check"><svg viewBox="0 0 10 8" fill="none" stroke="var(--success)" stroke-width="1.8"><path d="M1 4l3 3 5-6"/></svg></div><div class="resolved-info"><div class="resolved-name">3149 — Norberto dos Reis Guimarães · OS 90601</div><div class="resolved-detail">Atendimento realizado. Orçamento para 2 sensores enviado.</div><div class="resolved-date">✓ Resolvido em 16/07/2026</div></div></div>
+    <div class="resolved-item"><div class="resolved-check"><svg viewBox="0 0 10 8" fill="none" stroke="var(--success)" stroke-width="1.8"><path d="M1 4l3 3 5-6"/></svg></div><div class="resolved-info"><div class="resolved-name">1293 — Mobile Automóveis · OS 90530</div><div class="resolved-detail">Mudança de endereço realizada.</div><div class="resolved-date">✓ Resolvido em 07/2026</div></div></div>
+    <div class="resolved-item"><div class="resolved-check"><svg viewBox="0 0 10 8" fill="none" stroke="var(--success)" stroke-width="1.8"><path d="M1 4l3 3 5-6"/></svg></div><div class="resolved-info"><div class="resolved-name">9588 — JSL Goiás · OS 90267</div><div class="resolved-detail">Câmera externa instalada com escada locada dentro do prazo (21/07).</div><div class="resolved-date">✓ Resolvido em 21/07/2026</div></div></div>
+    <div class="resolved-item"><div class="resolved-check"><svg viewBox="0 0 10 8" fill="none" stroke="var(--success)" stroke-width="1.8"><path d="M1 4l3 3 5-6"/></svg></div><div class="resolved-info"><div class="resolved-name">8829 — Bombas Aluminas · OS 89304</div><div class="resolved-detail">Cliente instalou repetidor. Comercial acionado para novo projeto.</div><div class="resolved-date">✓ Resolvido em 17/07/2026</div></div></div>
+    <div class="resolved-item"><div class="resolved-check"><svg viewBox="0 0 10 8" fill="none" stroke="var(--success)" stroke-width="1.8"><path d="M1 4l3 3 5-6"/></svg></div><div class="resolved-info"><div class="resolved-name">9302 — Shekinah Cosméticos · OS 88604</div><div class="resolved-detail">Câmeras movidas + nova rede Wi-Fi. Thiago aprovou.</div><div class="resolved-date">✓ Resolvido em 09/07/2026</div></div></div>
+    <div class="resolved-item"><div class="resolved-check"><svg viewBox="0 0 10 8" fill="none" stroke="var(--success)" stroke-width="1.8"><path d="M1 4l3 3 5-6"/></svg></div><div class="resolved-info"><div class="resolved-name">2337 — Edgar Novaes · OS 88639</div><div class="resolved-detail">DR caindo — central reiniciada, comunicação restaurada.</div><div class="resolved-date">✓ Resolvido em 09/07/2026</div></div></div>
+    <div class="resolved-item"><div class="resolved-check"><svg viewBox="0 0 10 8" fill="none" stroke="var(--success)" stroke-width="1.8"><path d="M1 4l3 3 5-6"/></svg></div><div class="resolved-info"><div class="resolved-name">0365 — Paiva e Borges · OS 88012</div><div class="resolved-detail">Sensor zona 13 instalado, arme/desarme validados.</div><div class="resolved-date">✓ Resolvido em 03/07/2026</div></div></div>
+    <div class="resolved-item"><div class="resolved-check"><svg viewBox="0 0 10 8" fill="none" stroke="var(--success)" stroke-width="1.8"><path d="M1 4l3 3 5-6"/></svg></div><div class="resolved-info"><div class="resolved-name">0053 — Cerealista Rio Vermelho · OS 87992</div><div class="resolved-detail">Alarme e CFTV atendidos em 06/07.</div><div class="resolved-date">✓ Resolvido em 06/07/2026</div></div></div>
+    <div class="resolved-item"><div class="resolved-check"><svg viewBox="0 0 10 8" fill="none" stroke="var(--success)" stroke-width="1.8"><path d="M1 4l3 3 5-6"/></svg></div><div class="resolved-info"><div class="resolved-name">3116 — Mobile Veículos Especiais · OS 87731</div><div class="resolved-detail">Mudança de endereço — retirada 06/07, reinstalação 07/07.</div><div class="resolved-date">✓ Resolvido em 07/07/2026</div></div></div>
+    <div class="resolved-item"><div class="resolved-check"><svg viewBox="0 0 10 8" fill="none" stroke="var(--success)" stroke-width="1.8"><path d="M1 4l3 3 5-6"/></svg></div><div class="resolved-info"><div class="resolved-name">2172 — Rápido Araguaia · OS 86188</div><div class="resolved-detail">Câmeras ajustadas. Gabriel Rodrigues.</div><div class="resolved-date">✓ Resolvido em 30/06/2026</div></div></div>
+    <div class="resolved-item"><div class="resolved-check"><svg viewBox="0 0 10 8" fill="none" stroke="var(--success)" stroke-width="1.8"><path d="M1 4l3 3 5-6"/></svg></div><div class="resolved-info"><div class="resolved-name">2123 — Coat Química · OS 86461</div><div class="resolved-detail">Conectores — sem necessidade de novo cabeamento. NFs canceladas.</div><div class="resolved-date">✓ Resolvido em 02/07/2026</div></div></div>
+    <div class="resolved-item"><div class="resolved-check"><svg viewBox="0 0 10 8" fill="none" stroke="var(--success)" stroke-width="1.8"><path d="M1 4l3 3 5-6"/></svg></div><div class="resolved-info"><div class="resolved-name">8167 — Eduardo Guimarães Tibery · OS 86241</div><div class="resolved-detail">Cartão SD trocado — câmera gravando normalmente.</div><div class="resolved-date">✓ Resolvido em 01/07/2026</div></div></div>
+  </div>
+</div>
+
+</div>
+</main>
+<div class="modal-backdrop" id="record-modal">
+  <form class="modal" id="record-form">
+    <div class="modal-head"><h3 id="modal-title">Novo registro</h3><button type="button" class="modal-close" data-close-modal>×</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="f-card-id">
+      <div class="field"><label>Equipe</label><select id="f-team"><option value="portaria">Portaria</option><option value="varejo">Varejo</option></select></div>
+      <div class="field"><label>Número da OS</label><input id="f-os" placeholder="Ex.: 93369 ou Sem OS"></div>
+      <div class="field full"><label>Cliente</label><input id="f-client" required placeholder="Código e nome do cliente"></div>
+      <div class="field"><label>Filial</label><input id="f-branch" placeholder="Ex.: Goiânia/GO"></div>
+      <div class="field"><label>Origem da demanda</label><select id="f-origin"><option>SAC</option><option>CSAT</option><option>Filial</option><option>Cliente</option><option>Jurídico</option><option>Auditoria</option><option>Outro</option></select></div>
+      <div class="field"><label>Categoria</label><input id="f-category" placeholder="Ex.: Manutenção, CFTV, Alarme"></div>
+      <div class="field"><label>Área responsável</label><input id="f-area" placeholder="Ex.: Manutenção Portaria"></div>
+      <div class="field"><label>Prioridade</label><select id="f-priority"><option>Baixa</option><option selected>Média</option><option>Alta</option><option>Crítica</option></select></div>
+      <div class="field"><label>Impacto</label><select id="f-impact"><option>Baixo</option><option selected>Moderado</option><option>Alto</option><option>Crítico</option></select></div>
+      <div class="field"><label>Reincidência</label><select id="f-recurrence"><option>Não</option><option>Sim</option><option>Em análise</option></select></div>
+      <div class="field"><label>Motivo da prorrogação</label><input id="f-extension-reason" placeholder="Preencher quando houver prorrogação"></div>
+      <div class="field"><label>Data inicial — abertura</label><input id="f-date" type="date"></div>
+      <div class="field"><label>Data final — prazo atual</label><input id="f-deadline" type="date"></div>
+      <div class="field"><label>Dias em aberto — automático</label><input id="f-days" type="number" readonly></div>
+      <div class="field"><label>Tempo planejado — automático</label><input id="f-planned-days" type="number" readonly></div>
+      <div class="field full"><label>Situação do prazo — automática</label><select id="f-deadline-type" disabled><option value="overdue">Prazo vencido</option><option value="today">Prazo hoje</option><option value="tomorrow">Prazo amanhã</option><option value="future">Prazo futuro</option><option value="none">Sem prazo definido</option></select></div>
+      <div class="field full"><label>Resumo atual</label><textarea id="f-summary" required></textarea></div>
+      <div class="field full"><label>Descrição detalhada</label><textarea id="f-description"></textarea></div>
+      <div class="field"><label>Responsável pela ação atual</label><input id="f-responsible" placeholder="Nome do responsável"></div>
+      <div class="field"><label>Status da ação</label><select id="f-action-type"><option value="waiting">Aguardando</option><option value="action">Em andamento</option><option value="scheduled">Agendado</option><option value="done">Concluído</option><option value="alert">Alerta</option></select></div>
+      <div class="field full"><label>Ação/atualização</label><textarea id="f-action" placeholder="Descreva a providência, retorno ou próximo passo"></textarea></div>
+      <div class="field full"><label>Evidência ou referência</label><input id="f-evidence" placeholder="Nome do arquivo, link, número da OS ou outra referência"></div>
+    </div>
+    <div class="modal-foot"><button type="button" data-close-modal>Cancelar</button><button type="submit" class="save">Salvar registro</button></div>
+  </form>
+</div>
+<div class="modal-backdrop" id="complete-modal">
+  <form class="modal" id="complete-form">
+    <div class="modal-head"><h3>Concluir chamado</h3><button type="button" class="modal-close" data-close-complete>×</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="complete-card-id">
+      <div class="field full"><label>Cliente</label><input id="complete-client" readonly></div>
+      <div class="field"><label>Data da conclusão</label><input id="complete-date" type="date" required></div>
+      <div class="field"><label>Responsável pela conclusão</label><input id="complete-owner" required placeholder="Nome do responsável"></div>
+      <div class="field full"><label>Solução aplicada</label><textarea id="complete-solution" required placeholder="Descreva o que foi realizado e o resultado obtido"></textarea></div>
+      <div class="field full"><label>Evidência ou referência</label><input id="complete-evidence" placeholder="OS, arquivo, link, protocolo ou outra evidência"></div>
+      <div class="field full"><label>Validação final</label><select id="complete-validation"><option>Resolvido e validado</option><option>Resolvido — aguardando validação do cliente</option><option>Resolvido parcialmente</option></select></div>
+    </div>
+    <div class="modal-foot"><button type="button" data-close-complete>Cancelar</button><button type="submit" class="save">Confirmar conclusão</button></div>
+  </form>
+</div>
+<footer>
+  <span id="footer-summary">Relatório gerado com base na planilha de SAC exportada em 29/07/2026 · Equipe Manutenção Portaria &amp; Varejo · 15 atendimentos abertos · 41 resolvidos no período</span>
+</footer>
+<!-- ====== FIREBASE (Firestore) — sincronização compartilhada ====== -->
+<!-- Cole aqui as chaves do SEU projeto Firebase (Configurações do projeto > Seus apps > Config).
+     Sem essas chaves preenchidas corretamente, o dashboard continua funcionando normalmente,
+     só que salvando apenas no localStorage deste navegador (como já era antes). -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyD7b86QyDbfRKo7PQNoall2k-6qOJmqiCU",
+    authDomain: "sac-cs.firebaseapp.com",
+    projectId: "sac-cs",
+    storageBucket: "sac-cs.firebasestorage.app",
+    messagingSenderId: "1025770966978",
+    appId: "1:1025770966978:web:83be03bc03982dcbaad05b",
+    measurementId: "G-GD4MH8PGS2"
+  };
+  let db = null;
+  try {
+    if (!firebaseConfig.apiKey.startsWith('COLE_AQUI')) {
+      firebase.initializeApp(firebaseConfig);
+      db = firebase.firestore();
+    }
+  } catch (e) { console.warn('Firebase não inicializado:', e); }
+</script>
+<script>
+  const BRAND_LOGO='data:image/png;base64,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';
+  document.getElementById('brandLogo').src=BRAND_LOGO;
+  const STORAGE_KEY='newline_sac_dashboard_v3';
+  const FIREBASE_DOC=db?db.collection('dashboards').doc('sac_dashboard'):null;
+  const originalRecords=document.getElementById('records-root').innerHTML;
+  const savedRecords=localStorage.getItem(STORAGE_KEY);
+  if(savedRecords)document.getElementById('records-root').innerHTML=savedRecords;
+  let lastSavedAt=null;
+  function reRenderAfterRemoteUpdate(){decorateCards();calculateTotals();applyFilters();setText('save-state','Atualizado por outro usuário');const state=document.getElementById('save-state');state?.classList.remove('saved-flash');void state?.offsetWidth;state?.classList.add('saved-flash');}
+  if(FIREBASE_DOC){
+    FIREBASE_DOC.get().then(doc=>{
+      if(doc.exists&&doc.data().html){
+        lastSavedAt=doc.data().updatedAt||null;
+        document.getElementById('records-root').innerHTML=doc.data().html;
+        localStorage.setItem(STORAGE_KEY,doc.data().html);
+        reRenderAfterRemoteUpdate();
+      }
+      FIREBASE_DOC.onSnapshot(snap=>{
+        if(!snap.exists)return;
+        const data=snap.data();
+        if(!data.html||data.updatedAt===lastSavedAt)return;
+        lastSavedAt=data.updatedAt;
+        document.getElementById('records-root').innerHTML=data.html;
+        localStorage.setItem(STORAGE_KEY,data.html);
+        reRenderAfterRemoteUpdate();
+      });
+    }).catch(e=>console.warn('Erro ao ler Firestore, usando dados locais:',e));
+  }
+  const getCards=()=>[...document.querySelectorAll('#records-root .card')];
+  const setText=(id,value)=>{const el=document.getElementById(id);if(el)el.textContent=value};
+  const clean=s=>(s||'').replace(/\s+/g,' ').trim();
+  const localToday=()=>{const n=new Date();return new Date(n.getTime()-n.getTimezoneOffset()*60000).toISOString().slice(0,10)};
+  const dateFromISO=v=>v?new Date(`${v}T00:00:00`):null;
+  const daysBetween=(a,b)=>{const x=dateFromISO(a),y=dateFromISO(b);return x&&y?Math.max(0,Math.round((y-x)/86400000)):0};
+  const parseBRDate=(value,fallbackYear='2026')=>{const m=String(value||'').match(/(\d{1,2})\/(\d{1,2})(?:\/(\d{4}))?/);return m?`${m[3]||fallbackYear}-${String(m[2]).padStart(2,'0')}-${String(m[1]).padStart(2,'0')}`:''};
+  const deadlineStatus=date=>{if(!date)return'none';const diff=daysBetween(localToday(),date),raw=(dateFromISO(date)-dateFromISO(localToday()))/86400000;return raw<0?'overdue':diff===0?'today':diff===1?'tomorrow':'future'};
+  const deadlineLabel=date=>{const status=deadlineStatus(date),formatted=formatDate(date);return status==='overdue'?`⛔ Prazo vencido: ${formatted}`:status==='today'?`🔴 Prazo: HOJE ${formatted.slice(0,5)}`:status==='tomorrow'?`⚠ Prazo: ${formatted.slice(0,5)}`:status==='future'?`📅 Prazo: ${formatted.slice(0,5)}`:'Sem prazo definido'};
+  function toggle(id){document.getElementById(id)?.classList.toggle('open')}
+  function toggleResolved(id){document.getElementById(id)?.classList.toggle('open')}
+  function toggleCsat(id){document.getElementById(id)?.classList.toggle('open')}
+  function saveRecords(){
+    const snapshot=document.getElementById('records-root').cloneNode(true);
+    snapshot.querySelectorAll('.card').forEach(c=>c.classList.remove('open','filtered-out'));
+    snapshot.querySelectorAll('.section-label,.resolved-section').forEach(c=>c.classList.remove('filtered-out'));
+    const html=snapshot.innerHTML;
+    localStorage.setItem(STORAGE_KEY,html);
+    if(FIREBASE_DOC){
+      const now=Date.now();lastSavedAt=now;
+      FIREBASE_DOC.set({html,updatedAt:now},{merge:true}).catch(e=>console.warn('Erro ao salvar no Firestore (dados ficaram salvos localmente):',e));
+    }
+    setText('save-state',FIREBASE_DOC?'Alterações salvas para todos':'Alterações salvas neste navegador');
+    const state=document.getElementById('save-state');state?.classList.remove('saved-flash');void state?.offsetWidth;state?.classList.add('saved-flash');
+    setTimeout(()=>{setText('save-state','Salvamento automático');state?.classList.remove('saved-flash')},1500);
+  }
+  function decorateCards(){
+    getCards().forEach(card=>{
+      if(!card.dataset.team)card.dataset.team=card.id.startsWith('cv')?'varejo':'portaria';
+      if(!card.dataset.openDate){
+        const opening=clean(card.querySelector('.card-id')?.textContent).split('Abertura:')[1]||clean(card.querySelector('.abertura-row strong')?.textContent);card.dataset.openDate=parseBRDate(opening);
+      }
+      if(!card.dataset.deadlineDate){
+        const badgeText=clean(card.querySelector('.prazo-badge')?.textContent);card.dataset.deadlineDate=parseBRDate(badgeText,card.dataset.openDate?.slice(0,4)||'2026');
+      }
+      if(!card.dataset.deadlineHistory)card.dataset.deadlineHistory=JSON.stringify(card.dataset.deadlineDate?[{date:card.dataset.deadlineDate,type:'prazo_inicial'}]:[]);
+      if(!card.dataset.extensionCount){const manual=clean(card.querySelector('.prorrog-badge')?.textContent),n=Number(manual.match(/\d+/)?.[0]);card.dataset.extensionCount=String(n||(/prorrog/i.test(manual)?1:0))}
+      if(card.dataset.openDate){
+        const age=daysBetween(card.dataset.openDate,localToday()),ageNum=card.querySelector('.age-num');if(ageNum)ageNum.textContent=age;
+        const ageBar=card.querySelector('.age-bar');if(ageBar){ageBar.classList.remove('age-fresh','age-medium','age-old','age-critical');ageBar.classList.add(age>=31?'age-critical':age>=16?'age-old':age>=8?'age-medium':'age-fresh')}
+      }
+      const badge=card.querySelector('.prazo-badge');if(badge){const status=deadlineStatus(card.dataset.deadlineDate);badge.className=`prazo-badge ${status}`;badge.textContent=deadlineLabel(card.dataset.deadlineDate)}
+      let extensionBadge=card.querySelector('.prorrog-badge');const extensionCount=Number(card.dataset.extensionCount)||0;
+      if(extensionCount&&!extensionBadge){extensionBadge=document.createElement('div');extensionBadge.className='prorrog-badge';card.querySelector('.card-right')?.insertBefore(extensionBadge,card.querySelector('.update-count'))}
+      if(extensionBadge){if(extensionCount){extensionBadge.textContent=`↻ ${extensionCount}ª prorrogação${extensionCount>1?'':' '}`.trim()}else extensionBadge.remove()}
+      const stepsCount=card.querySelectorAll('.timeline .step').length,updateCount=card.querySelector('.update-count');
+      if(updateCount)updateCount.innerHTML=`<span style="width:7px;height:7px;border-radius:50%;background:var(--green2);display:inline-block"></span> ${stepsCount} registro${stepsCount===1?'':'s'} no histórico`;
+      const intro=card.querySelector('.timeline-intro');if(intro)intro.innerHTML=`Histórico completo do cliente · <strong>${stepsCount} registro${stepsCount===1?'':'s'}</strong> · <strong>${extensionCount} prorrogação${extensionCount===1?'':'ões'}</strong>.`;
+      card.classList.remove('risk-today','risk-none','risk-extended','risk-ok');
+      if(card.querySelector('.prazo-badge.today,.prazo-badge.overdue'))card.classList.add('risk-today');
+      else if(card.querySelector('.prazo-badge.none'))card.classList.add('risk-none');
+      else if(card.querySelector('.prorrog-badge'))card.classList.add('risk-extended');
+      else card.classList.add('risk-ok');
+      const meta=card.querySelector('.card-meta');let tags=card.querySelector('.card-tags');if(!tags){tags=document.createElement('div');tags.className='card-tags';meta?.appendChild(tags)}
+      const tagData=[['priority',card.dataset.priority],['branch',card.dataset.branch],['category',card.dataset.category],['area',card.dataset.area],['recurrence',card.dataset.recurrence==='Sim'?'Reincidente':'']];
+      tags.innerHTML=tagData.filter(x=>x[1]).map(([k,v])=>`<span class="data-chip ${k==='priority'?'priority-'+v.toLocaleLowerCase('pt-BR'):''}">${k==='priority'?'Prioridade: ':''}${v}</span>`).join('');
+      ['.card-name','.card-desc','.problem-box p'].forEach(sel=>card.querySelectorAll(sel).forEach(el=>{el.dataset.editable='true';el.contentEditable=document.body.classList.contains('editing')?'true':'false'}));
+      card.querySelectorAll('.step').forEach(step=>{
+        const txt=step.querySelector('.step-text');if(txt){txt.dataset.editable='true';txt.contentEditable=document.body.classList.contains('editing')?'true':'false'}
+        if(!step.querySelector('.step-responsible')){
+          const responsible=document.createElement('div');responsible.className='step-responsible';responsible.dataset.editable='true';responsible.textContent='Responsável: Não informado';
+          step.querySelector('.step-text')?.before(responsible);
+        }
+      });
+      let tools=card.querySelector('.edit-tools');if(!tools){tools=document.createElement('div');tools.className='edit-tools';card.querySelector('.card-right')?.appendChild(tools)}
+      tools.innerHTML=`<button type="button" class="mini-btn edit-card" data-card="${card.id}">Editar cliente</button><button type="button" class="mini-btn add-action" data-card="${card.id}">+ Nova ação</button><button type="button" class="mini-btn complete-card" data-card="${card.id}">✓ Concluir chamado</button>`;
+    });
+  }
+  function calculateTotals(){
+    const cards=getCards(),count=s=>cards.filter(c=>c.querySelector(s)).length;
+    const portaria=cards.filter(c=>c.dataset.team==='portaria'),varejo=cards.filter(c=>c.dataset.team==='varejo');
+    const totalAge=cards.reduce((sum,c)=>sum+(Number(c.querySelector('.age-num')?.textContent)||0),0);
+    const noOwner=cards.filter(c=>[...c.querySelectorAll('.step-responsible')].some(r=>/não informado/i.test(r.textContent))).length;
+    const totals={open:cards.length,today:count('.prazo-badge.today,.prazo-badge.overdue'),tomorrow:count('.prazo-badge.tomorrow'),future:count('.prazo-badge.future'),none:count('.prazo-badge.none'),extended:count('.prorrog-badge'),averageAge:totalAge/Math.max(cards.length,1),noOwner};
+    [['kpi-open',totals.open],['kpi-today',totals.today],['kpi-none',totals.none],['kpi-extended',totals.extended],['kpi-average-age',totals.averageAge.toFixed(1).replace('.',',')],['legend-today',totals.today],['legend-tomorrow',totals.tomorrow],['legend-future',totals.future],['legend-none',totals.none],['donut-total',totals.open],['donut-today',totals.today],['donut-tomorrow',totals.tomorrow],['donut-future',totals.future],['donut-none',totals.none],['count-portaria',portaria.length],['count-varejo',varejo.length]].forEach(([id,v])=>setText(id,v));
+    setText('insight-priority',`${totals.today} chamado${totals.today===1?' possui':'s possuem'} prazo para hoje e exige${totals.today===1?'':'m'} acompanhamento imediato.`);
+    setText('insight-owners',totals.noOwner?`${totals.noOwner} chamado${totals.noOwner===1?' possui':'s possuem'} ao menos uma ação sem responsável definido.`:'Todas as ações possuem responsável definido.');
+    setText('insight-extensions',`${totals.extended} chamado${totals.extended===1?' já teve':'s já tiveram'} prorrogação; revisar causa e novo compromisso.`);
+    document.getElementById('bar-portaria').style.width=`${portaria.length/Math.max(totals.open,1)*100}%`;
+    document.getElementById('bar-varejo').style.width=`${varejo.length/Math.max(totals.open,1)*100}%`;
+    const headerNums=document.querySelectorAll('.header-stats .num');if(headerNums.length===3){headerNums[0].textContent=portaria.length;headerNums[1].textContent=varejo.length;headerNums[2].textContent=totals.open}
+    const p1=totals.today/Math.max(totals.open,1)*100,p2=p1+totals.tomorrow/Math.max(totals.open,1)*100,p3=p2+totals.future/Math.max(totals.open,1)*100;
+    document.getElementById('deadline-donut').style.background=`conic-gradient(var(--danger) 0 ${p1}%,var(--warn) ${p1}% ${p2}%,var(--success) ${p2}% ${p3}%,#9aa89f ${p3}% 100%)`;
+    const ages=[{label:'0–7 dias',min:0,max:7},{label:'8–15 dias',min:8,max:15},{label:'16–30 dias',min:16,max:30},{label:'31+ dias',min:31,max:9999}];
+    const values=ages.map(a=>cards.filter(c=>{const n=Number(c.querySelector('.age-num')?.textContent)||0;return n>=a.min&&n<=a.max}).length),max=Math.max(...values,1);
+    document.getElementById('age-chart').innerHTML=ages.map((a,i)=>`<div class="age-column"><b>${values[i]}</b><i style="height:${Math.max(3,values[i]/max*145)}px"></i><span>${a.label}</span></div>`).join('');
+    const resolvedPortaria=document.querySelectorAll('#res-p .resolved-item').length,resolvedVarejo=document.querySelectorAll('#res-v .resolved-item').length,resolvedTotal=resolvedPortaria+resolvedVarejo;
+    const headingP=document.querySelector('#res-p .resolved-toggle h3'),headingV=document.querySelector('#res-v .resolved-toggle h3');
+    if(headingP)headingP.textContent=`✓ Chamados Resolvidos — Portaria (${resolvedPortaria})`;if(headingV)headingV.textContent=`✓ Chamados Resolvidos — Varejo (${resolvedVarejo})`;
+    setText('footer-summary',`Relatório gerado com base na planilha de SAC exportada em 29/07/2026 · Equipe Manutenção Portaria & Varejo · ${totals.open} atendimentos abertos · ${resolvedTotal} resolvidos no período`);
+    return totals;
+  }
+  let activeFilter='all';
+  function applyFilters(){
+    const cards=getCards(),term=document.getElementById('search').value.toLocaleLowerCase('pt-BR').trim();let visible=0;
+    cards.forEach(card=>{
+      const matchesText=!term||card.textContent.toLocaleLowerCase('pt-BR').includes(term);
+      const matchesType=activeFilter==='all'||(activeFilter==='today'&&card.querySelector('.prazo-badge.today,.prazo-badge.overdue'))||(activeFilter==='none'&&card.querySelector('.prazo-badge.none'))||(activeFilter==='extended'&&card.querySelector('.prorrog-badge'));
+      const show=matchesText&&matchesType;card.classList.toggle('filtered-out',!show);if(show)visible++;
+    });
+    document.querySelectorAll('#records-root .section-label').forEach((label,i,labels)=>{
+      const next=labels[i+1];let node=label.nextElementSibling,hasVisible=false;
+      while(node&&node!==next){if(node.classList?.contains('card')&&!node.classList.contains('filtered-out'))hasVisible=true;node=node.nextElementSibling}
+      label.classList.toggle('filtered-out',!hasVisible);
+    });
+    document.querySelectorAll('.resolved-section').forEach(s=>s.classList.toggle('filtered-out',activeFilter!=='all'||!!term));
+    setText('result-count',`${visible} ${visible===1?'chamado':'chamados'}`);document.getElementById('empty-state').style.display=visible?'none':'block';
+  }
+  function openModal(mode,cardId=''){
+    const form=document.getElementById('record-form');form.dataset.mode=mode;form.dataset.originalSnapshot='{}';document.getElementById('f-card-id').value=cardId;
+    ['f-os','f-client','f-branch','f-category','f-area','f-extension-reason','f-date','f-days','f-planned-days','f-deadline','f-summary','f-description','f-responsible','f-action','f-evidence'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('f-team').value='portaria';document.getElementById('f-origin').value='SAC';document.getElementById('f-priority').value='Média';document.getElementById('f-impact').value='Moderado';document.getElementById('f-recurrence').value='Não';document.getElementById('f-deadline-type').value='none';document.getElementById('f-action-type').value='waiting';
+    const card=document.getElementById(cardId);
+    if(card){
+      document.getElementById('f-team').value=card.dataset.team||'portaria';
+      document.getElementById('f-os').value=clean(card.querySelector('.card-id')?.childNodes[0]?.textContent).replace(/^OS\s*/,'').split('·')[0].trim();
+      document.getElementById('f-client').value=clean(card.querySelector('.card-name')?.textContent);
+      document.getElementById('f-date').value=card.dataset.openDate||'';document.getElementById('f-deadline').value=card.dataset.deadlineDate||'';
+      document.getElementById('f-summary').value=clean(card.querySelector('.card-desc')?.textContent);
+      document.getElementById('f-description').value=clean(card.querySelector('.problem-box p')?.textContent);
+      document.getElementById('f-branch').value=card.dataset.branch||'';document.getElementById('f-origin').value=card.dataset.origin||'SAC';document.getElementById('f-category').value=card.dataset.category||'';document.getElementById('f-area').value=card.dataset.area||'';document.getElementById('f-priority').value=card.dataset.priority||'Média';document.getElementById('f-impact').value=card.dataset.impact||'Moderado';document.getElementById('f-recurrence').value=card.dataset.recurrence||'Não';document.getElementById('f-extension-reason').value=card.dataset.extensionReason||'';
+      form.dataset.originalSnapshot=JSON.stringify({client:clean(card.querySelector('.card-name')?.textContent),os:document.getElementById('f-os').value,branch:card.dataset.branch||'',origin:card.dataset.origin||'SAC',category:card.dataset.category||'',area:card.dataset.area||'',priority:card.dataset.priority||'Média',impact:card.dataset.impact||'Moderado',recurrence:card.dataset.recurrence||'Não',openDate:card.dataset.openDate||'',deadlineDate:card.dataset.deadlineDate||'',summary:clean(card.querySelector('.card-desc')?.textContent),description:clean(card.querySelector('.problem-box p')?.textContent)});
+    }
+    if(mode==='action'){
+      document.getElementById('modal-title').textContent=`Nova ação — ${clean(card?.querySelector('.card-name')?.textContent)}`;
+      document.querySelectorAll('#record-form .field').forEach(f=>f.style.display='none');
+      ['f-responsible','f-action-type','f-action','f-evidence'].forEach(id=>document.getElementById(id).closest('.field').style.display='block');
+    }else{
+      document.getElementById('modal-title').textContent=mode==='new'?'Novo registro':'Editar informações do cliente';
+      document.querySelectorAll('#record-form .field').forEach(f=>f.style.display='block');
+    }
+    updateDateAutomation();
+    document.getElementById('record-modal').classList.add('open');
+  }
+  function closeModal(){document.getElementById('record-modal').classList.remove('open')}
+  function openCompleteModal(cardId){
+    const card=document.getElementById(cardId);if(!card)return;
+    document.getElementById('complete-card-id').value=cardId;document.getElementById('complete-client').value=clean(card.querySelector('.card-name')?.textContent);
+    const now=new Date(),localDate=new Date(now.getTime()-now.getTimezoneOffset()*60000).toISOString().slice(0,10);document.getElementById('complete-date').value=localDate;
+    document.getElementById('complete-owner').value='';document.getElementById('complete-solution').value='';document.getElementById('complete-evidence').value='';document.getElementById('complete-validation').value='Resolvido e validado';
+    document.getElementById('complete-modal').classList.add('open');
+  }
+  function closeCompleteModal(){document.getElementById('complete-modal').classList.remove('open')}
+  function formatDate(v){if(!v)return '';const [y,m,d]=v.split('-');return `${d}/${m}/${y}`}
+  function updateDateAutomation(){
+    const start=document.getElementById('f-date').value,end=document.getElementById('f-deadline').value;
+    document.getElementById('f-days').value=start?daysBetween(start,localToday()):'';
+    document.getElementById('f-planned-days').value=start&&end?daysBetween(start,end):'';
+    document.getElementById('f-deadline-type').value=deadlineStatus(end);
+  }
+  ['f-date','f-deadline'].forEach(id=>document.getElementById(id).addEventListener('input',updateDateAutomation));
+  function addAction(card,type,responsible,text,evidence=''){
+    let timeline=card.querySelector('.timeline');if(!timeline)return;
+    const step=document.createElement('div');step.className=`step type-${type}`;
+    step.innerHTML=`<div class="step-dot"></div><div class="step-badge">✦ Atualização</div><div class="step-date">${new Date().toLocaleDateString('pt-BR')}</div><div class="step-responsible" data-editable="true">Responsável: ${responsible||'Não informado'}</div><div class="step-text" data-editable="true">${text||'Ação registrada.'}</div>${evidence?`<div class="step-date">Evidência: ${evidence}</div>`:''}`;
+    timeline.appendChild(step);card.classList.add('open');
+  }
+  document.getElementById('record-form').addEventListener('submit',e=>{
+    e.preventDefault();const mode=e.currentTarget.dataset.mode,id=document.getElementById('f-card-id').value;
+    if(mode==='action'){addAction(document.getElementById(id),document.getElementById('f-action-type').value,document.getElementById('f-responsible').value,document.getElementById('f-action').value,document.getElementById('f-evidence').value);decorateCards();calculateTotals();saveRecords();closeModal();return}
+    const team=document.getElementById('f-team').value,cardId=mode==='new'?`${team==='varejo'?'cv':'c'}u${Date.now()}`:id;
+    let card=document.getElementById(cardId);
+    const deadlineType=deadlineStatus(document.getElementById('f-deadline').value),deadline=document.getElementById('f-deadline').value,openDate=document.getElementById('f-date').value;
+    const original=mode==='edit'?JSON.parse(e.currentTarget.dataset.originalSnapshot||'{}'):{};
+    if(mode==='new'){
+      card=document.createElement('div');card.className='card';card.id=cardId;card.dataset.team=team;
+      card.innerHTML=`<div class="card-header" onclick="toggle('${cardId}')"><div class="card-meta"><div class="card-id">OS ${document.getElementById('f-os').value||'Sem OS'} · Abertura: ${formatDate(document.getElementById('f-date').value)||'Não informada'} <span class="new-tag">✦ Novo</span></div><div class="card-name"></div><div class="card-desc"></div><div class="card-tags"></div></div><div class="card-right"><div class="age-bar age-fresh"><span class="age-num"></span><div class="age-label"><span>aberto há</span><span>dias</span></div></div><div class="prazo-badge ${deadlineType}"></div><div class="update-count">Registro editável</div><div class="toggle-btn">ver histórico <svg fill="none" viewBox="0 0 10 6" width="10" height="6" stroke="currentColor" stroke-width="1.5"><path d="M1 1l4 4 4-4"/></svg></div></div></div><div class="timeline-wrap"><div class="timeline-intro">Histórico de ações e responsáveis.</div><div class="problem-box"><label>Descrição</label><p></p></div><div class="abertura-row">Abertura em <strong>${formatDate(document.getElementById('f-date').value)||'data não informada'}</strong></div><div class="timeline"></div></div>`;
+      document.getElementById(team==='varejo'?'res-v':'res-p').before(card);
+    }
+    card.dataset.team=team;card.dataset.branch=document.getElementById('f-branch').value;card.dataset.origin=document.getElementById('f-origin').value;card.dataset.category=document.getElementById('f-category').value;card.dataset.area=document.getElementById('f-area').value;card.dataset.priority=document.getElementById('f-priority').value;card.dataset.impact=document.getElementById('f-impact').value;card.dataset.recurrence=document.getElementById('f-recurrence').value;card.dataset.extensionReason=document.getElementById('f-extension-reason').value;card.dataset.openDate=openDate;card.dataset.deadlineDate=deadline;
+    let deadlineHistory=[];try{deadlineHistory=JSON.parse(card.dataset.deadlineHistory||'[]')}catch(e){deadlineHistory=[]}
+    const owner=document.getElementById('f-responsible').value.trim()||'Não informado';
+    if(mode==='new'){
+      card.dataset.extensionCount='0';deadlineHistory=deadline?[{date:deadline,type:'prazo_inicial',registeredAt:new Date().toISOString(),responsible:owner}]:[];
+      addAction(card,'new',owner,`Cadastro do cliente criado. Data inicial: ${formatDate(openDate)||'não informada'}. Data final: ${formatDate(deadline)||'não informada'}.`);
+    }else if(original.deadlineDate&&deadline&&original.deadlineDate!==deadline){
+      const extensionCount=(Number(card.dataset.extensionCount)||0)+1;card.dataset.extensionCount=String(extensionCount);
+      deadlineHistory.push({previousDate:original.deadlineDate,date:deadline,type:'prorrogacao',registeredAt:new Date().toISOString(),responsible:owner,reason:document.getElementById('f-extension-reason').value});
+      addAction(card,'scheduled',owner,`Prazo alterado automaticamente de ${formatDate(original.deadlineDate)} para ${formatDate(deadline)}. Registrada como ${extensionCount}ª prorrogação.${document.getElementById('f-extension-reason').value?` Motivo: ${document.getElementById('f-extension-reason').value}.`:''}`);
+    }else if(!original.deadlineDate&&deadline){
+      deadlineHistory.push({date:deadline,type:'prazo_definido',registeredAt:new Date().toISOString(),responsible:owner});
+      addAction(card,'scheduled',owner,`Data final definida em ${formatDate(deadline)}.`);
+    }else if(original.deadlineDate&&!deadline){
+      deadlineHistory.push({previousDate:original.deadlineDate,date:'',type:'prazo_removido',registeredAt:new Date().toISOString(),responsible:owner});
+      addAction(card,'alert',owner,`Data final de ${formatDate(original.deadlineDate)} foi removida. O chamado ficou sem prazo definido.`);
+    }
+    card.dataset.deadlineHistory=JSON.stringify(deadlineHistory);
+    if(mode==='edit'){
+      const current={client:document.getElementById('f-client').value,os:document.getElementById('f-os').value,branch:card.dataset.branch,origin:card.dataset.origin,category:card.dataset.category,area:card.dataset.area,priority:card.dataset.priority,impact:card.dataset.impact,recurrence:card.dataset.recurrence,openDate,summary:document.getElementById('f-summary').value,description:document.getElementById('f-description').value};
+      const labels={client:'Cliente',os:'OS',branch:'Filial',origin:'Origem',category:'Categoria',area:'Área responsável',priority:'Prioridade',impact:'Impacto',recurrence:'Reincidência',openDate:'Data inicial',summary:'Resumo',description:'Descrição'};
+      const changes=Object.keys(current).filter(k=>String(original[k]??'')!==String(current[k]??'')).map(k=>`${labels[k]}: “${original[k]||'não informado'}” → “${current[k]||'não informado'}”`);
+      if(changes.length)addAction(card,'info',owner,`Cadastro atualizado automaticamente. ${changes.join('; ')}.`);
+    }
+    const meta=card.querySelector('.card-id'),metaText=`OS ${document.getElementById('f-os').value||'Sem OS'} · Abertura: ${formatDate(document.getElementById('f-date').value)||clean(meta?.textContent).split('Abertura:')[1]?.split('✦')[0]?.trim()||'Não informada'} `;
+    if(meta?.childNodes[0])meta.childNodes[0].textContent=metaText;
+    if(document.getElementById('f-date').value&&card.querySelector('.abertura-row strong'))card.querySelector('.abertura-row strong').textContent=formatDate(document.getElementById('f-date').value);
+    card.querySelector('.card-name').textContent=document.getElementById('f-client').value;card.querySelector('.card-desc').textContent=document.getElementById('f-summary').value;card.querySelector('.problem-box p').textContent=document.getElementById('f-description').value;card.querySelector('.age-num').textContent=openDate?daysBetween(openDate,localToday()):'0';
+    const destination=document.getElementById(team==='varejo'?'res-v':'res-p');if(card.nextElementSibling!==destination)destination.before(card);
+    const badge=card.querySelector('.prazo-badge');badge.className=`prazo-badge ${deadlineType}`;badge.textContent=deadlineLabel(deadline);
+    if(document.getElementById('f-action').value)addAction(card,document.getElementById('f-action-type').value,document.getElementById('f-responsible').value,document.getElementById('f-action').value,document.getElementById('f-evidence').value);
+    decorateCards();calculateTotals();saveRecords();applyFilters();closeModal();
+  });
+  document.getElementById('complete-form').addEventListener('submit',e=>{
+    e.preventDefault();const card=document.getElementById(document.getElementById('complete-card-id').value);if(!card)return;
+    const team=card.dataset.team||'portaria',client=clean(card.querySelector('.card-name')?.textContent),os=clean(card.querySelector('.card-id')?.textContent).split('·')[0];
+    const date=formatDate(document.getElementById('complete-date').value),owner=document.getElementById('complete-owner').value.trim(),solution=document.getElementById('complete-solution').value.trim(),evidence=document.getElementById('complete-evidence').value.trim(),validation=document.getElementById('complete-validation').value;
+    addAction(card,'done',owner,`Chamado concluído em ${date}. ${solution} Validação: ${validation}.`,evidence);
+    const item=document.createElement('div');item.className='resolved-item';item.dataset.completedFrom=card.id;
+    const check=document.createElement('div');check.className='resolved-check';check.innerHTML='<svg viewBox="0 0 10 8" fill="none" stroke="var(--success)" stroke-width="1.8"><path d="M1 4l3 3 5-6"/></svg>';
+    const info=document.createElement('div');info.className='resolved-info';
+    const name=document.createElement('div');name.className='resolved-name';name.textContent=`${client} · ${os}`;
+    const detail=document.createElement('div');detail.className='resolved-detail';detail.textContent=`${solution} Responsável: ${owner}. ${validation}.${evidence?` Evidência: ${evidence}.`:''}`;
+    const resolvedDate=document.createElement('div');resolvedDate.className='resolved-date';resolvedDate.textContent=`✓ Resolvido em ${date}`;
+    const history=document.createElement('details');history.className='resolved-history';const summary=document.createElement('summary');summary.textContent='Ver histórico completo do cliente';const historyContent=card.querySelector('.timeline-wrap')?.cloneNode(true);history.append(summary);if(historyContent)history.append(historyContent);
+    info.append(name,detail,resolvedDate,history);item.append(check,info);
+    const section=document.getElementById(team==='varejo'?'res-v':'res-p');section.querySelector('.resolved-list').prepend(item);section.classList.add('open');card.remove();
+    calculateTotals();saveRecords();applyFilters();closeCompleteModal();setText('save-state','Chamado concluído');
+  });
+  document.addEventListener('click',e=>{
+    const edit=e.target.closest('.edit-card'),action=e.target.closest('.add-action'),complete=e.target.closest('.complete-card');if(edit){e.stopPropagation();openModal('edit',edit.dataset.card)}if(action){e.stopPropagation();openModal('action',action.dataset.card)}if(complete){e.stopPropagation();openCompleteModal(complete.dataset.card)}
+    if(e.target.matches('[data-close-modal]')||e.target===document.getElementById('record-modal'))closeModal();
+    if(e.target.matches('[data-close-complete]')||e.target===document.getElementById('complete-modal'))closeCompleteModal();
+  });
+  document.getElementById('new-record').addEventListener('click',()=>openModal('new'));
+  document.getElementById('records-root').addEventListener('input',e=>{if(e.target.matches('[data-editable="true"]'))saveRecords()});
+  document.getElementById('search').addEventListener('input',applyFilters);
+  document.querySelectorAll('.filter-btn').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');activeFilter=btn.dataset.filter;applyFilters()}));
+  document.getElementById('export-pdf').addEventListener('click',()=>window.print());
+  document.getElementById('export-excel').addEventListener('click',()=>{
+    const rows=[['Equipe','OS','Cliente','Filial','Origem','Categoria','Área responsável','Prioridade','Impacto','Reincidência','Data inicial','Data final atual','Dias em aberto','Tempo planejado','Quantidade de prorrogações','Histórico de datas','Motivo da prorrogação','Situação do prazo','Resumo','Descrição','Responsável','Ação','Data da ação','Evidência']];
+    getCards().filter(c=>!c.classList.contains('filtered-out')).forEach(c=>{
+      let history=[];try{history=JSON.parse(c.dataset.deadlineHistory||'[]')}catch(e){history=[]}
+      const historyText=history.map(h=>h.previousDate?`${formatDate(h.previousDate)} → ${formatDate(h.date)} (${h.type})`:`${formatDate(h.date)} (${h.type})`).join(' | ');
+      const base=[c.dataset.team==='varejo'?'Varejo':'Portaria',clean(c.querySelector('.card-id')?.textContent),clean(c.querySelector('.card-name')?.textContent),c.dataset.branch||'',c.dataset.origin||'',c.dataset.category||'',c.dataset.area||'',c.dataset.priority||'',c.dataset.impact||'',c.dataset.recurrence||'',formatDate(c.dataset.openDate),formatDate(c.dataset.deadlineDate),clean(c.querySelector('.age-num')?.textContent),c.dataset.openDate&&c.dataset.deadlineDate?daysBetween(c.dataset.openDate,c.dataset.deadlineDate):'',c.dataset.extensionCount||'0',historyText,c.dataset.extensionReason||'',clean(c.querySelector('.prazo-badge')?.textContent),clean(c.querySelector('.card-desc')?.textContent),clean(c.querySelector('.problem-box p')?.textContent)];
+      const steps=[...c.querySelectorAll('.step')];if(!steps.length)rows.push([...base,'','','','']);
+      steps.forEach(s=>{const dates=[...s.querySelectorAll('.step-date')].map(x=>clean(x.textContent));rows.push([...base,clean(s.querySelector('.step-responsible')?.textContent).replace('Responsável:','').trim(),clean(s.querySelector('.step-text')?.textContent),dates[0]||'',(dates.find(x=>/^Evidência:/i.test(x))||'').replace(/^Evidência:\s*/i,'')])});
+    });
+    const esc=v=>String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const table=`<html><head><meta charset="UTF-8"></head><body><table border="1">${rows.map(r=>`<tr>${r.map(v=>`<td>${esc(v)}</td>`).join('')}</tr>`).join('')}</table></body></html>`;
+    const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff',table],{type:'application/vnd.ms-excel'}));a.download=`Relatorio_SAC_NewLine_${new Date().toISOString().slice(0,10)}.xls`;a.click();URL.revokeObjectURL(a.href);
+  });
+  document.querySelector('.header-actions').insertAdjacentHTML('beforeend','<button class="action-btn" id="restore-base">Restaurar base</button>');
+  document.getElementById('restore-base').addEventListener('click',()=>{if(confirm('Deseja apagar as alterações feitas neste navegador e restaurar os dados originais?')){localStorage.removeItem(STORAGE_KEY);document.getElementById('records-root').innerHTML=originalRecords;decorateCards();calculateTotals();applyFilters();setText('save-state','Base restaurada')}});
+  document.body.dataset.view='dashboard';
+  document.querySelectorAll('.view-tab').forEach(tab=>tab.addEventListener('click',()=>{
+    document.querySelectorAll('.view-tab').forEach(t=>t.classList.remove('active'));tab.classList.add('active');document.body.dataset.view=tab.dataset.viewTarget;window.scrollTo({top:0,behavior:'smooth'});
+  }));
+  document.getElementById('edit-mode').addEventListener('click',()=>{document.querySelector('[data-view-target="management"]').click()});
+  decorateCards();calculateTotals();applyFilters();
+  document.querySelectorAll('.prazo-badge.today,.prazo-badge.overdue').forEach(b=>b.closest('.card')?.classList.add('open'));
+</script>
+</body>
+</html>
