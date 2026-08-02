@@ -320,6 +320,8 @@
   </div>
   <div class="header-actions">
     <button class="action-btn" id="edit-mode">Editar informações</button>
+    <button class="action-btn" id="import-excel">📥 Atualizar via planilha</button>
+    <input type="file" id="import-excel-input" accept=".xlsx,.xls" style="display:none">
     <button class="action-btn" id="export-excel">Exportar Excel</button>
     <button class="action-btn" id="export-pdf">Exportar PDF</button>
     <button class="action-btn primary" id="new-record">+ Novo registro</button>
@@ -1138,6 +1140,7 @@
 <!-- ====== SUPABASE — sincronização compartilhada ====== -->
 <!-- Projeto: sac-cs (Supabase). Sem essas chaves, o dashboard funciona normalmente,
      só que salvando apenas no localStorage deste navegador. -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
   const SUPABASE_URL = "https://efmyadivuftooqeqdoql.supabase.co";
@@ -1436,6 +1439,173 @@
   });
   document.querySelector('.header-actions').insertAdjacentHTML('beforeend','<button class="action-btn" id="restore-base">Restaurar base</button>');
   document.getElementById('restore-base').addEventListener('click',()=>{if(confirm('Deseja apagar as alterações feitas neste navegador e restaurar os dados originais?')){localStorage.removeItem(STORAGE_KEY);document.getElementById('records-root').innerHTML=originalRecords;decorateCards();calculateTotals();applyFilters();setText('save-state','Base restaurada')}});
+
+  // ====== IMPORTAÇÃO DE PLANILHA (.xlsx) — atualiza Portaria e Varejo sem tocar nas demais equipes ======
+  const MESES_PT={janeiro:1,fevereiro:2,marco:3,abril:4,maio:5,junho:6,julho:7,agosto:8,setembro:9,outubro:10,novembro:11,dezembro:12};
+  function stripAccents(s){return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'')}
+  function excelSerialToDate(serial){const utcDays=Math.floor(serial-25569);return new Date(utcDays*86400*1000)}
+  function parseCellDate(cell){
+    if(cell instanceof Date&&!isNaN(cell))return cell;
+    if(typeof cell==='number'&&cell>10000)return excelSerialToDate(cell);
+    if(typeof cell==='string'){
+      const s=cell.trim();
+      let m=s.match(/(\d{1,2})\s+de\s+([a-zçãéêô]+)\s+de\s+(\d{4})/i);
+      if(m){const month=MESES_PT[stripAccents(m[2].toLowerCase())];if(month)return new Date(Date.UTC(+m[3],month-1,+m[1]))}
+      m=s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if(m)return new Date(Date.UTC(+m[1],+m[2]-1,+m[3]));
+      m=s.match(/(\d{1,2})[\/.](\d{1,2})[\/.](\d{4})/);
+      if(m)return new Date(Date.UTC(+m[3],+m[2]-1,+m[1]));
+    }
+    return null;
+  }
+  function formatDateBR(d){if(!d)return '';const dd=String(d.getUTCDate()).padStart(2,'0'),mm=String(d.getUTCMonth()+1).padStart(2,'0');return `${dd}/${mm}/${d.getUTCFullYear()}`}
+  function cellText(v){if(v===undefined||v===null)return '';if(v instanceof Date)return formatDateBR(v);return String(v).trim()}
+  function classifyStepType(text,isLast){
+    const t=stripAccents(text).toLowerCase();
+    if(/resolvid|tudo ok|validad|conclu[ií]d/.test(t))return 'done';
+    if(/aguardand|pendente|sem solucao/.test(t))return 'waiting';
+    if(isLast)return 'new';
+    return 'action';
+  }
+  function buildStepsFromText(text){
+    const raw=String(text||'').replace(/\r/g,'').split(/\n+/).map(l=>l.trim()).filter(Boolean);
+    if(!raw.length)return [{text:'Nenhuma ação registrada até o momento.',type:'new',badge:'Sem registro'}];
+    const steps=[];let current=null;
+    raw.forEach(line=>{
+      if(/^\d+\s*[-.\s]/.test(line)){
+        if(current)steps.push(current);
+        current={text:line.replace(/^\d+\s*[-.\s]+/,'').trim()};
+      }else if(current){current.text+=' '+line}else{current={text:line}}
+    });
+    if(current)steps.push(current);
+    return steps.map((s,i)=>({text:s.text,type:classifyStepType(s.text,i===steps.length-1),badge:i===steps.length-1?'Última atualização':`Atualização ${i+1}`}));
+  }
+  function escHtml(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+  function buildPrazoInfo(cell){
+    const d=parseCellDate(cell);
+    if(d)return {text:`Prazo: ${formatDateBR(d)}`};
+    const t=cellText(cell);
+    if(/resolvid/i.test(t))return {text:'Atendimento realizado — aguardando validação'};
+    return {text:'Sem prazo definido'};
+  }
+  function buildCardHtml(cid,team,osNum,aberturaCell,clientName,descText,statusText,prazoCell,historicoCell){
+    const aberturaDate=parseCellDate(aberturaCell);
+    const aberturaDisplay=typeof aberturaCell==='string'&&/de\s+[a-zçã]+\s+de\s+\d{4}/i.test(aberturaCell)?aberturaCell.trim():formatDateBR(aberturaDate)||'Não informada';
+    const aberturaShort=aberturaDate?formatDateBR(aberturaDate):(cellText(aberturaCell)||'Não informada');
+    const historicoLines=String(historicoCell||'').split(/\n+/).map(l=>l.trim()).filter(Boolean);
+    const extensionCount=Math.max(0,historicoLines.length-1);
+    const prazoInfo=buildPrazoInfo(prazoCell);
+    const steps=buildStepsFromText(statusText);
+    const lastStepText=steps[steps.length-1]?.text||'';
+    const descShort=lastStepText.length>170?lastStepText.slice(0,170).replace(/\s+\S*$/,'')+'…':lastStepText;
+    const stepsHtml=steps.map(s=>`      <div class="step type-${s.type}"><div class="step-dot"></div><div class="step-badge">${escHtml(s.badge)}</div><div class="step-text">${escHtml(s.text)}</div></div>`).join('\n');
+    const extraBadge=extensionCount>0?`      <div class="prorrog-badge">↻ ${extensionCount}ª prorrogação</div>\n`:'';
+    return `<div class="card" id="${cid}" data-team="${team}">
+  <div class="card-header" onclick="toggle('${cid}')">
+    <div class="card-meta">
+      <div class="card-id">OS ${escHtml(osNum||'Sem OS')} · Abertura: ${escHtml(aberturaShort)}</div>
+      <div class="card-name">${escHtml(clientName)}</div>
+      <div class="card-desc">${escHtml(descShort||'Sem descrição de status registrada.')}</div>
+    </div>
+    <div class="card-right">
+      <div class="age-bar age-fresh"><span class="age-num">0</span><div class="age-label"><span>aberto há</span><span>dias</span></div></div>
+      <div class="prazo-badge none">${escHtml(prazoInfo.text)}</div>
+${extraBadge}      <div class="update-count"><span style="width:7px;height:7px;border-radius:50%;background:var(--green2);display:inline-block"></span> registros no histórico</div>
+      <div class="toggle-btn">ver histórico <svg fill="none" viewBox="0 0 10 6" width="10" height="6" stroke="currentColor" stroke-width="1.5"><path d="M1 1l4 4 4-4"/></svg></div>
+    </div>
+  </div>
+  <div class="timeline-wrap">
+    <div class="timeline-intro">Histórico completo do campo <strong>Status Atual</strong>.</div>
+    <div class="problem-box"><label>Descrição</label><p>${escHtml(descText)}</p></div>
+    <div class="abertura-row"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="6" r="5"/><path d="M6 3.5v2.5l1.5 1"/></svg>Abertura em <strong>${escHtml(aberturaDisplay)}</strong></div>
+    <div class="timeline">
+${stepsHtml}
+    </div>
+  </div>
+</div>`;
+  }
+  function buildResolvedHtml(name,detail,dateText){
+    return `    <div class="resolved-item"><div class="resolved-check"><svg viewBox="0 0 10 8" fill="none" stroke="var(--success)" stroke-width="1.8"><path d="M1 4l3 3 5-6"/></svg></div><div class="resolved-info"><div class="resolved-name">${escHtml(name)}</div><div class="resolved-detail">${escHtml(detail)}</div><div class="resolved-date">${escHtml(dateText)}</div></div></div>`;
+  }
+  function lastNonEmptyLine(text){
+    const lines=String(text||'').split(/\n+/).map(l=>l.trim().replace(/^\d+\s*[-.\s]+/,'')).filter(Boolean);
+    return lines.length?lines[lines.length-1]:'';
+  }
+  function resolvedDateText(statusCell){
+    const t=cellText(statusCell);
+    const m=t.match(/(\d{1,2})[\/.](\d{1,2})(?:[\/.](\d{2,4}))?/);
+    if(m){const y=m[3]?(m[3].length===2?'20'+m[3]:m[3]):'2026';return `✓ Resolvido em ${m[1].padStart(2,'0')}/${m[2].padStart(2,'0')}/${y}`}
+    if(/resolvid/i.test(t))return '✓ Resolvido';
+    return t?`ℹ ${t}`:'✓ Resolvido';
+  }
+  function isBlankRow(row){return !row||row.every(c=>c===undefined||c===null||String(c).trim()==='')}
+  function normalizeText(v){return stripAccents(cellText(v)).toUpperCase()}
+  function parseSacWorkbook(rows){
+    const result={portaria:{abertos:[],resolvidos:[]},varejo:{abertos:[],resolvidos:[]}};
+    let team=null,mode=null,warnings=[];
+    for(let i=0;i<rows.length;i++){
+      const row=rows[i]||[];
+      const c0=normalizeText(row[0]);
+      if(isBlankRow(row))continue;
+      if(/RELACAO DOS ATENDIMENTOS.*PORTARIA/.test(c0)){team='portaria';mode='abertos';continue}
+      if(/RELACAO DOS ATENDIMENTOS.*VAREJO/.test(c0)){team='varejo';mode='abertos';continue}
+      if(/CHAMADOS QUE FORAM SOLUCIONADOS.*PORTARIA/.test(c0)){team='portaria';mode='resolvidos';continue}
+      if(/CHAMADOS QUE FORAM SOLUCIONADOS.*VAREJO/.test(c0)){team='varejo';mode='resolvidos';continue}
+      if(c0==='CLIENTE'||c0==='CONTA')continue; // linha de cabeçalho
+      if(!team||!mode){continue}
+      if(!row[0]&&!row[1])continue;
+      result[team][mode].push(row);
+    }
+    return {result,warnings};
+  }
+  function importWorkbookFile(file){
+    const reader=new FileReader();
+    reader.onload=e=>{
+      try{
+        const data=new Uint8Array(e.target.result);
+        const wb=XLSX.read(data,{type:'array',cellDates:true});
+        const sheet=wb.Sheets[wb.SheetNames[0]];
+        const rows2=XLSX.utils.sheet_to_json(sheet,{header:1,raw:true});
+        const {result}=parseSacWorkbook(rows2);
+        let importedOpen=0,importedResolved=0;
+        ['portaria','varejo'].forEach(team=>{
+          const cfg=TEAMS[team];
+          const openRows=result[team].abertos,resolvedRows=result[team].resolvidos;
+          const openHtml=openRows.map((row,idx)=>{
+            const osNum=cellText(row[1])||'Sem OS';
+            const safeId=`${cfg.prefix}-${String(osNum).replace(/[^a-z0-9]/gi,'')||idx}`;
+            return buildCardHtml(safeId,team,osNum,row[2],cellText(row[0]).replace(/\s+/g,' '),cellText(row[3]),cellText(row[4]),row[5],row[6]);
+          }).join('\n\n');
+          const resolvedHtml=resolvedRows.map(row=>{
+            const osNum=cellText(row[1]);
+            const name=`${cellText(row[0]).replace(/\s+/g,' ')}${osNum?` · OS ${osNum}`:''}`;
+            const detail=lastNonEmptyLine(row[4])||'Chamado resolvido.';
+            return buildResolvedHtml(name,detail,resolvedDateText(row[5]));
+          }).join('\n');
+          // remover cards antigos dessa equipe
+          document.querySelectorAll(`#records-root .card`).forEach(c=>{if(c.dataset.team===team)c.remove()});
+          const anchor=document.getElementById(cfg.section);
+          if(openHtml)anchor.insertAdjacentHTML('beforebegin',openHtml+'\n\n');
+          const list=anchor.querySelector('.resolved-list');list.innerHTML=resolvedHtml;
+          importedOpen+=openRows.length;importedResolved+=resolvedRows.length;
+        });
+        decorateCards();calculateTotals();applyFilters();saveRecords();
+        setText('save-state',`Planilha importada: ${importedOpen} abertos, ${importedResolved} resolvidos`);
+        alert(`Planilha importada com sucesso!\n\nPortaria e Varejo foram atualizados: ${importedOpen} chamados abertos e ${importedResolved} resolvidos.\nAs demais equipes (Cobrança, Suporte Corporativo, Cadastro, Faturamento) não foram alteradas.`);
+      }catch(err){
+        console.error('Erro ao importar planilha:',err);
+        alert('Não foi possível importar essa planilha. Verifique se o arquivo segue o mesmo formato de sempre (colunas: Cliente, OS, Data de abertura, Descrição, Status/Ações, Prazo, Histórico de prazo) e tente novamente.');
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+  document.getElementById('import-excel').addEventListener('click',()=>document.getElementById('import-excel-input').click());
+  document.getElementById('import-excel-input').addEventListener('change',e=>{
+    const file=e.target.files[0];if(!file)return;
+    if(confirm(`Importar "${file.name}"?\n\nIsso vai substituir os chamados de Portaria e Varejo pelos dados dessa planilha. As demais equipes não serão afetadas.`))importWorkbookFile(file);
+    e.target.value='';
+  });
+
   document.body.dataset.view='dashboard';
   document.querySelectorAll('.view-tab').forEach(tab=>tab.addEventListener('click',()=>{
     document.querySelectorAll('.view-tab').forEach(t=>t.classList.remove('active'));tab.classList.add('active');document.body.dataset.view=tab.dataset.viewTarget;window.scrollTo({top:0,behavior:'smooth'});
