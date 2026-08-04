@@ -283,6 +283,12 @@ body[data-view="management"] .dashboard-shell{display:none}
 
 .timeline-wrap{display:none;padding:0 18px 18px;background:var(--surface-2);border-top:1px solid var(--border)}
 .card.open .timeline-wrap{display:block;animation:reveal .25s var(--ease)}
+.resolved-history{margin-top:8px}
+.resolved-history summary{cursor:pointer;font-size:11px;font-weight:650;color:var(--accent);list-style:none;display:inline-flex;align-items:center;gap:5px;padding:4px 0;}
+.resolved-history summary::-webkit-details-marker{display:none}
+.resolved-history summary::before{content:'▸';font-size:10px;transition:transform .15s}
+.resolved-history[open] summary::before{transform:rotate(90deg)}
+.resolved-history .timeline-wrap{display:block !important;padding:12px 0 0;margin-top:6px;border-top:1px solid var(--border);background:transparent;border-radius:0}
 @keyframes reveal{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
 .timeline-intro{font-size:11.5px;color:var(--muted);padding:14px 0 10px}
 .problem-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:12px 14px;margin-bottom:12px}
@@ -1560,7 +1566,8 @@ body.editing [data-editable="true"]{outline:1px dashed var(--gold);outline-offse
   function addAction(card,type,responsible,text,evidence=''){
     let timeline=card.querySelector('.timeline');if(!timeline)return;
     const step=document.createElement('div');step.className=`step type-${type}`;
-    step.innerHTML=`<div class="step-dot"></div><div class="step-badge">✦ Atualização</div><div class="step-date">${new Date().toLocaleDateString('pt-BR')}</div><div class="step-responsible" data-editable="true">Responsável: ${responsible||'Não informado'}</div><div class="step-text" data-editable="true">${text||'Ação registrada.'}</div>${evidence?`<div class="step-date">Evidência: ${evidence}</div>`:''}`;
+    const now=new Date(),dateStr=now.toLocaleDateString('pt-BR'),timeStr=now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    step.innerHTML=`<div class="step-dot"></div><div class="step-badge">✦ Atualização</div><div class="step-date">${dateStr} às ${timeStr}</div><div class="step-responsible" data-editable="true">Responsável: ${responsible||'Não informado'}</div><div class="step-text" data-editable="true">${text||'Ação registrada.'}</div>${evidence?`<div class="step-date">Evidência: ${evidence}</div>`:''}`;
     timeline.appendChild(step);card.classList.add('open');
   }
   document.getElementById('record-form').addEventListener('submit',e=>{
