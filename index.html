@@ -574,10 +574,20 @@ body.editing [data-editable="true"]{outline:1px dashed var(--gold);outline-offse
   <button class="filter-btn" data-filter="today">Prazo hoje</button>
   <button class="filter-btn" data-filter="none">Sem prazo</button>
   <button class="filter-btn" data-filter="extended">Prorrogados</button>
+  <span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);">📅 Abertura: de <input type="date" id="filter-open-from" style="border:1px solid var(--border);border-radius:6px;padding:5px 6px;font-size:11px;background:var(--surface);color:var(--text);"> até <input type="date" id="filter-open-to" style="border:1px solid var(--border);border-radius:6px;padding:5px 6px;font-size:11px;background:var(--surface);color:var(--text);"> <button type="button" id="clear-open-date-filter" class="filter-btn" style="padding:5px 8px;font-size:10px;" title="Limpar filtro de data">✕</button></span>
   <button class="filter-btn" id="save-filter-btn" title="Salvar busca + filtro atual">☆ Salvar filtro</button>
   <span class="result-count" id="result-count">15 chamados</span>
 </div>
 <div id="saved-filters-row" style="display:flex;gap:6px;flex-wrap:wrap;margin:-8px 0 12px;"></div>
+<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:-4px 0 16px;padding:10px 14px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--surface-2);">
+  <span style="font-size:11px;font-weight:700;color:var(--muted);">✓ Filtrar resolvidos por data de resolução:</span>
+  <span style="font-size:11px;color:var(--muted);">de</span>
+  <input type="date" id="filter-resolved-from" style="border:1px solid var(--border);border-radius:6px;padding:5px 6px;font-size:11px;background:var(--surface);color:var(--text);">
+  <span style="font-size:11px;color:var(--muted);">até</span>
+  <input type="date" id="filter-resolved-to" style="border:1px solid var(--border);border-radius:6px;padding:5px 6px;font-size:11px;background:var(--surface);color:var(--text);">
+  <button type="button" id="clear-resolved-date-filter" class="filter-btn" style="padding:5px 10px;font-size:10px;">✕ Limpar</button>
+  <span id="resolved-filter-count" style="font-size:11px;color:var(--muted);margin-left:auto;"></span>
+</div>
 <div class="empty-state" id="empty-state" style="display:flex;flex-direction:column;align-items:center;gap:8px;"><span style="font-size:28px;">🔎</span>Nenhum chamado encontrado com os filtros selecionados.</div>
 <div class="edit-notice">Modo de edição ativo: clique nos textos destacados para alterar. As modificações são salvas automaticamente neste navegador.</div>
 <div class="risk-legend" aria-label="Legenda de criticidade"><span><i style="background:#c74343"></i>Prazo hoje ou vencido</span><span><i style="background:#dc851f"></i>Sem prazo definido</span><span><i style="background:#d4a928"></i>Prorrogado</span><span><i style="background:#79a725"></i>Dentro do prazo</span></div>
@@ -1490,25 +1500,49 @@ body.editing [data-editable="true"]{outline:1px dashed var(--gold);outline-offse
       const heading=document.querySelector(`#${cfg.section} .resolved-toggle h3`);if(heading)heading.textContent=`✓ Chamados Resolvidos — ${cfg.label} (${resolvedCount})`;
     });
     setText('footer-summary',`Relatório gerado com base na planilha de SAC exportada em 27/07/2026 · Todas as equipes · ${totals.open} atendimentos abertos · ${resolvedTotal} resolvidos no período`);
+    applyResolvedDateFilter();
     return totals;
   }
   let activeFilter='all';
   function applyFilters(){
     const cards=getCards(),term=document.getElementById('search').value.toLocaleLowerCase('pt-BR').trim();let visible=0;
+    const dateFrom=document.getElementById('filter-open-from').value,dateTo=document.getElementById('filter-open-to').value;
     cards.forEach(card=>{
       const matchesText=!term||card.textContent.toLocaleLowerCase('pt-BR').includes(term);
       const matchesType=activeFilter==='all'||(activeFilter==='today'&&card.querySelector('.prazo-badge.today,.prazo-badge.overdue'))||(activeFilter==='none'&&card.querySelector('.prazo-badge.none'))||(activeFilter==='extended'&&card.querySelector('.prorrog-badge'));
-      const show=matchesText&&matchesType;card.classList.toggle('filtered-out',!show);if(show)visible++;
+      let matchesDate=true;
+      if(dateFrom||dateTo){const d=card.dataset.openDate;if(!d)matchesDate=false;else{if(dateFrom&&d<dateFrom)matchesDate=false;if(dateTo&&d>dateTo)matchesDate=false;}}
+      const show=matchesText&&matchesType&&matchesDate;card.classList.toggle('filtered-out',!show);if(show)visible++;
     });
     document.querySelectorAll('#records-root .section-label').forEach((label,i,labels)=>{
       const next=labels[i+1];let node=label.nextElementSibling,hasVisible=false,placeholder=null;
       while(node&&node!==next){if(node.classList?.contains('card')&&!node.classList.contains('filtered-out'))hasVisible=true;if(node.classList?.contains('team-empty-placeholder'))placeholder=node;node=node.nextElementSibling}
       label.classList.toggle('filtered-out',!hasVisible);
-      if(placeholder)placeholder.style.display=(!hasVisible&&activeFilter==='all'&&!term)?'flex':'none';
+      if(placeholder)placeholder.style.display=(!hasVisible&&activeFilter==='all'&&!term&&!dateFrom&&!dateTo)?'flex':'none';
     });
-    document.querySelectorAll('.resolved-section').forEach(s=>s.classList.toggle('filtered-out',activeFilter!=='all'||!!term));
+    document.querySelectorAll('.resolved-section').forEach(s=>s.classList.toggle('filtered-out',activeFilter!=='all'||!!term||!!dateFrom||!!dateTo));
     setText('result-count',`${visible} ${visible===1?'chamado':'chamados'}`);document.getElementById('empty-state').style.display=visible?'none':'flex';
   }
+  function applyResolvedDateFilter(){
+    const from=document.getElementById('filter-resolved-from').value,to=document.getElementById('filter-resolved-to').value;
+    let totalVisible=0,totalItems=0;
+    document.querySelectorAll('.resolved-item').forEach(item=>{
+      totalItems++;
+      const dateText=clean(item.querySelector('.resolved-date')?.textContent);
+      const m=dateText.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+      const iso=m?`${m[3]}-${m[2]}-${m[1]}`:null;
+      let show=true;
+      if(from||to){if(!iso)show=false;else{if(from&&iso<from)show=false;if(to&&iso>to)show=false;}}
+      item.style.display=show?'':'none';
+      if(show)totalVisible++;
+    });
+    const countEl=document.getElementById('resolved-filter-count');
+    countEl.textContent=(from||to)?`${totalVisible} de ${totalItems} exibidos`:'';
+  }
+  ['filter-open-from','filter-open-to'].forEach(id=>document.getElementById(id).addEventListener('change',applyFilters));
+  document.getElementById('clear-open-date-filter').addEventListener('click',()=>{document.getElementById('filter-open-from').value='';document.getElementById('filter-open-to').value='';applyFilters()});
+  ['filter-resolved-from','filter-resolved-to'].forEach(id=>document.getElementById(id).addEventListener('change',applyResolvedDateFilter));
+  document.getElementById('clear-resolved-date-filter').addEventListener('click',()=>{document.getElementById('filter-resolved-from').value='';document.getElementById('filter-resolved-to').value='';applyResolvedDateFilter()});
   function openModal(mode,cardId=''){
     const form=document.getElementById('record-form');form.dataset.mode=mode;form.dataset.originalSnapshot='{}';document.getElementById('f-card-id').value=cardId;
     ['f-os','f-client','f-category','f-date','f-days','f-planned-days','f-deadline','f-summary','f-description','f-responsible','f-action','f-evidence','f-action-newdate'].forEach(id=>document.getElementById(id).value='');
