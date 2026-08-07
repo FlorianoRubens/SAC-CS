@@ -205,7 +205,6 @@ body[data-view="management"] .dashboard-shell{display:none}
 .risk-legend i,.deadline-legend i,.legend-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;display:inline-block}
 
 /* Ação recomendada */
-#action-recommendation{animation:none;border:1px solid var(--border);border-left:3px solid var(--danger)}
 
 /* ---------- Toolbar ---------- */
 .toolbar{
@@ -237,6 +236,7 @@ body[data-view="management"] .dashboard-shell{display:none}
 .section-label h2{font-size:11.5px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--muted)}
 .section-line{flex:1;height:1px;background:var(--border)}
 .prorrog-badge{font-size:9px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;background:color-mix(in srgb,var(--purple) 12%,transparent);border:1px solid color-mix(in srgb,var(--purple) 35%,transparent);color:var(--purple);padding:3px 8px;border-radius:var(--r-xs);white-space:nowrap}
+.recurrence-badge{font-size:9px;font-weight:700;letter-spacing:.03em;background:color-mix(in srgb,#0e7490 12%,transparent);border:1px solid color-mix(in srgb,#0e7490 35%,transparent);color:#0e7490;padding:3px 8px;border-radius:var(--r-xs);white-space:nowrap;cursor:help}
 
 /* ---------- Cards ---------- */
 .card{
@@ -263,8 +263,7 @@ body[data-view="management"] .dashboard-shell{display:none}
 .card-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
 .card-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
 .data-chip{font-size:9.5px;font-weight:700;color:var(--text-2);background:var(--surface-3);border:1px solid var(--border);border-radius:var(--r-xs);padding:3px 7px}
-.data-chip.priority-alta,.data-chip.priority-crítica{background:color-mix(in srgb,var(--danger) 10%,transparent);border-color:color-mix(in srgb,var(--danger) 30%,transparent);color:var(--danger)}
-.data-chip.priority-média{background:color-mix(in srgb,var(--warn) 12%,transparent);border-color:color-mix(in srgb,var(--warn) 32%,transparent);color:var(--warn)}
+.data-chip-alert{background:color-mix(in srgb,var(--danger) 10%,transparent);border-color:color-mix(in srgb,var(--danger) 30%,transparent);color:var(--danger)}
 
 .age-bar{display:flex;align-items:center;gap:8px;padding:7px 11px;border-radius:var(--r-md);background:var(--surface-3);border:1px solid var(--border)}
 .age-bar .age-num{font:700 19px var(--mono);line-height:1}
@@ -466,7 +465,6 @@ body.editing [data-editable="true"]{outline:1px dashed var(--gold);outline-offse
     <div class="header-copy">
     <div class="header-title">Relatório SAC · Equipe Manutenção</div>
     <h1>Atendimentos Abertos Sem Solução</h1>
-    <div class="header-date">📅 29 de julho de 2026 — Atualizado hoje</div>
     </div>
   </div>
   <div class="header-stats">
@@ -479,8 +477,7 @@ body.editing [data-editable="true"]{outline:1px dashed var(--gold);outline-offse
     <div class="stat-pill tot"><span class="num">12</span><span class="lbl">Total</span></div>
   </div>
   <div class="header-actions">
-    <button class="action-btn" id="edit-mode">Editar informações</button>
-    <button class="action-btn" id="global-search-btn">🔍 Buscar (Ctrl+K)</button>
+    <button class="action-btn" id="global-search-btn">🔍 Buscar (Ctrl/Cmd+K)</button>
     <button class="action-btn" id="import-excel">📥 Atualizar via planilha</button>
     <input type="file" id="import-excel-input" accept=".xlsx,.xls" style="display:none">
     <button class="action-btn" id="export-excel">Exportar Excel</button>
@@ -513,19 +510,11 @@ body.editing [data-editable="true"]{outline:1px dashed var(--gold);outline-offse
 </div>
 <section class="dashboard-shell" aria-label="Resumo executivo">
   <div class="dashboard-grid">
-    <article class="kpi" style="--kpi-color:#087a47"><div class="kpi-label">Atendimentos abertos</div><div class="kpi-value" id="kpi-open">15</div><div class="kpi-note">Portaria e Varejo</div></article>
+    <article class="kpi" style="--kpi-color:#087a47"><div class="kpi-label">Atendimentos abertos</div><div class="kpi-value" id="kpi-open">15</div><div class="kpi-note">Todas as equipes</div></article>
     <article class="kpi" style="--kpi-color:#d84545"><div class="kpi-label">Prazo hoje</div><div class="kpi-value" id="kpi-today">6</div><div class="kpi-note">Exigem acompanhamento imediato</div></article>
     <article class="kpi" style="--kpi-color:#e58b18"><div class="kpi-label">Sem prazo</div><div class="kpi-value" id="kpi-none">4</div><div class="kpi-note">Risco de perda de controle</div></article>
     <article class="kpi" style="--kpi-color:#7657c8"><div class="kpi-label">Prorrogados</div><div class="kpi-value" id="kpi-extended">6</div><div class="kpi-note">Demandam revisão de causa</div></article>
     <article class="kpi"><div class="kpi-label">Tempo médio em aberto</div><div class="kpi-value" id="kpi-average-age">11,4</div><div class="kpi-note">dias por chamado</div></article>
-  </div>
-  <div id="action-recommendation" class="panel" style="border:1px solid var(--danger);margin-bottom:14px;display:flex;align-items:center;gap:16px;animation:actionPulse 2.4s ease-in-out infinite;">
-    <div style="font-size:26px;flex-shrink:0;">🎯</div>
-    <div style="flex:1;min-width:200px;">
-      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--danger);margin-bottom:3px;">Ação recomendada hoje</div>
-      <div id="action-recommendation-text" style="font-size:13px;color:var(--text);">Calculando...</div>
-    </div>
-    <button id="action-recommendation-btn" class="filter-btn" style="flex-shrink:0;white-space:nowrap;">Ver lista →</button>
   </div>
   <div class="insight-grid">
     <article class="panel">
@@ -1222,7 +1211,7 @@ body.editing [data-editable="true"]{outline:1px dashed var(--gold);outline-offse
   <h2>Equipe Cobrança</h2>
   <div class="section-line"></div>
 </div>
-<div class="team-empty-placeholder" data-team-placeholder="cobranca" style="display:flex;align-items:center;gap:12px;padding:22px 20px;border:1px dashed var(--border);border-radius:12px;background:var(--surface2);color:var(--muted);margin-bottom:20px;"><span style="font-size:22px;">✓</span><span style="font-size:12px;">Nenhum chamado pendente na equipe Cobrança.</span></div>
+<div class="team-empty-placeholder" data-team-placeholder="cobranca" style="display:flex;align-items:center;gap:12px;padding:22px 20px;border:1px dashed var(--border);border-radius:12px;background:var(--surface-2);color:var(--muted);margin-bottom:20px;"><span style="font-size:22px;">✓</span><span style="font-size:12px;">Nenhum chamado pendente na equipe Cobrança.</span></div>
 <div class="resolved-section" id="res-cob">
   <div class="resolved-toggle" onclick="toggleResolved('res-cob')">
     <div style="width:8px;height:8px;border-radius:50%;background:var(--success);flex-shrink:0"></div>
@@ -1238,7 +1227,7 @@ body.editing [data-editable="true"]{outline:1px dashed var(--gold);outline-offse
   <h2>Equipe Suporte Corporativo</h2>
   <div class="section-line"></div>
 </div>
-<div class="team-empty-placeholder" data-team-placeholder="suporte-corporativo" style="display:flex;align-items:center;gap:12px;padding:22px 20px;border:1px dashed var(--border);border-radius:12px;background:var(--surface2);color:var(--muted);margin-bottom:20px;"><span style="font-size:22px;">✓</span><span style="font-size:12px;">Nenhum chamado pendente na equipe Suporte Corporativo.</span></div>
+<div class="team-empty-placeholder" data-team-placeholder="suporte-corporativo" style="display:flex;align-items:center;gap:12px;padding:22px 20px;border:1px dashed var(--border);border-radius:12px;background:var(--surface-2);color:var(--muted);margin-bottom:20px;"><span style="font-size:22px;">✓</span><span style="font-size:12px;">Nenhum chamado pendente na equipe Suporte Corporativo.</span></div>
 <div class="resolved-section" id="res-sup">
   <div class="resolved-toggle" onclick="toggleResolved('res-sup')">
     <div style="width:8px;height:8px;border-radius:50%;background:var(--success);flex-shrink:0"></div>
@@ -1254,7 +1243,7 @@ body.editing [data-editable="true"]{outline:1px dashed var(--gold);outline-offse
   <h2>Equipe Cadastro</h2>
   <div class="section-line"></div>
 </div>
-<div class="team-empty-placeholder" data-team-placeholder="cadastro" style="display:flex;align-items:center;gap:12px;padding:22px 20px;border:1px dashed var(--border);border-radius:12px;background:var(--surface2);color:var(--muted);margin-bottom:20px;"><span style="font-size:22px;">✓</span><span style="font-size:12px;">Nenhum chamado pendente na equipe Cadastro.</span></div>
+<div class="team-empty-placeholder" data-team-placeholder="cadastro" style="display:flex;align-items:center;gap:12px;padding:22px 20px;border:1px dashed var(--border);border-radius:12px;background:var(--surface-2);color:var(--muted);margin-bottom:20px;"><span style="font-size:22px;">✓</span><span style="font-size:12px;">Nenhum chamado pendente na equipe Cadastro.</span></div>
 <div class="resolved-section" id="res-cad">
   <div class="resolved-toggle" onclick="toggleResolved('res-cad')">
     <div style="width:8px;height:8px;border-radius:50%;background:var(--success);flex-shrink:0"></div>
@@ -1270,7 +1259,7 @@ body.editing [data-editable="true"]{outline:1px dashed var(--gold);outline-offse
   <h2>Equipe Faturamento</h2>
   <div class="section-line"></div>
 </div>
-<div class="team-empty-placeholder" data-team-placeholder="faturamento" style="display:flex;align-items:center;gap:12px;padding:22px 20px;border:1px dashed var(--border);border-radius:12px;background:var(--surface2);color:var(--muted);margin-bottom:20px;"><span style="font-size:22px;">✓</span><span style="font-size:12px;">Nenhum chamado pendente na equipe Faturamento.</span></div>
+<div class="team-empty-placeholder" data-team-placeholder="faturamento" style="display:flex;align-items:center;gap:12px;padding:22px 20px;border:1px dashed var(--border);border-radius:12px;background:var(--surface-2);color:var(--muted);margin-bottom:20px;"><span style="font-size:22px;">✓</span><span style="font-size:12px;">Nenhum chamado pendente na equipe Faturamento.</span></div>
 <div class="resolved-section" id="res-fat">
   <div class="resolved-toggle" onclick="toggleResolved('res-fat')">
     <div style="width:8px;height:8px;border-radius:50%;background:var(--success);flex-shrink:0"></div>
@@ -1291,7 +1280,7 @@ body.editing [data-editable="true"]{outline:1px dashed var(--gold);outline-offse
       <div class="field"><label>Equipe</label><select id="f-team"><option value="portaria">Portaria</option><option value="varejo">Varejo</option><option value="cobranca">Cobrança</option><option value="suporte-corporativo">Suporte Corporativo</option><option value="cadastro">Cadastro</option><option value="faturamento">Faturamento</option></select></div>
       <div class="field"><label>Número da OS</label><input id="f-os" placeholder="Ex.: 93369 ou Sem OS"></div>
       <div class="field full"><label>Cliente</label><input id="f-client" required placeholder="Código e nome do cliente"></div>
-      <div class="field"><label>Origem da demanda</label><select id="f-origin"><option>SAC</option><option>Cliente Detrator NPS</option><option>Cliente Detrator CSAT</option><option>Cliente</option><option>Jurídico</option><option>Auditoria</option><option>Outro</option></select></div>
+      <div class="field"><label>Origem da demanda</label><select id="f-origin"><option>SAC</option><option>Cliente Detrator NPS</option><option>Cliente Detrator CSAT</option><option>Vistoria Reprovada</option><option>Cliente</option><option>Jurídico</option><option>Auditoria</option><option>Outro</option></select></div>
       <div class="field"><label>Categoria</label><input id="f-category" placeholder="Ex.: Manutenção, CFTV, Alarme"></div>
       <div class="field"><label>Data inicial — abertura</label><input id="f-date" type="date"></div>
       <div class="field"><label>Data final — prazo atual</label><input id="f-deadline" type="date"></div>
@@ -1313,7 +1302,7 @@ body.editing [data-editable="true"]{outline:1px dashed var(--gold);outline-offse
   <div class="modal" style="max-width:560px;max-height:70vh;display:flex;flex-direction:column;">
     <div class="modal-head"><h3>Buscar chamado</h3><button type="button" class="modal-close" data-close-modal>×</button></div>
     <div style="padding:14px 20px;">
-      <input id="global-search-input" type="text" placeholder="Digite o nome do cliente, OS ou parte da descrição…" style="width:100%;box-sizing:border-box;padding:12px 14px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:15px;outline:none;">
+      <input id="global-search-input" type="text" placeholder="Digite o nome do cliente, OS ou parte da descrição…" style="width:100%;box-sizing:border-box;padding:12px 14px;border-radius:10px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);font-size:15px;outline:none;">
     </div>
     <div id="global-search-results" style="overflow-y:auto;padding:0 12px 16px;flex:1;"></div>
   </div>
@@ -1334,7 +1323,7 @@ body.editing [data-editable="true"]{outline:1px dashed var(--gold);outline-offse
   </form>
 </div>
 <footer>
-  <span id="footer-summary">Relatório gerado com base na planilha de SAC exportada em 27/07/2026 · Equipe Manutenção Portaria &amp; Varejo · 15 atendimentos abertos · 41 resolvidos no período</span>
+  <span id="footer-summary">Relatório gerado com base na planilha de SAC exportada em 27/07/2026 · Todas as equipes · 15 atendimentos abertos · 41 resolvidos no período</span>
 </footer>
 <!-- ====== SUPABASE — sincronização compartilhada ====== -->
 <!-- Projeto: sac-cs (Supabase). Sem essas chaves, o dashboard funciona normalmente,
@@ -1439,8 +1428,11 @@ body.editing [data-editable="true"]{outline:1px dashed var(--gold);outline-offse
       else if(card.querySelector('.prorrog-badge'))card.classList.add('risk-extended');
       else card.classList.add('risk-ok');
       const meta=card.querySelector('.card-meta');let tags=card.querySelector('.card-tags');if(!tags){tags=document.createElement('div');tags.className='card-tags';meta?.appendChild(tags)}
-      const tagData=[['category',card.dataset.category]];
-      tags.innerHTML=tagData.filter(x=>x[1]).map(([k,v])=>`<span class="data-chip ${k==='priority'?'priority-'+v.toLocaleLowerCase('pt-BR'):''}">${k==='priority'?'Prioridade: ':''}${v}</span>`).join('');
+      const tagData=[['origin',card.dataset.origin],['category',card.dataset.category]];
+      tags.innerHTML=tagData.filter(x=>x[1]).map(([k,v])=>{
+        const alert=k==='origin'&&/detrator|vistoria reprovada|jurídico|auditoria/i.test(v);
+        return `<span class="data-chip${alert?' data-chip-alert':''}">${k==='origin'?'Origem: ':''}${v}</span>`;
+      }).join('');
       ['.card-name','.card-desc','.problem-box p'].forEach(sel=>card.querySelectorAll(sel).forEach(el=>{el.dataset.editable='true';el.contentEditable=document.body.classList.contains('editing')?'true':'false'}));
       card.querySelectorAll('.step').forEach(step=>{
         const txt=step.querySelector('.step-text');if(txt){txt.dataset.editable='true';txt.contentEditable=document.body.classList.contains('editing')?'true':'false'}
@@ -1451,6 +1443,27 @@ body.editing [data-editable="true"]{outline:1px dashed var(--gold);outline-offse
       });
       let tools=card.querySelector('.edit-tools');if(!tools){tools=document.createElement('div');tools.className='edit-tools';card.querySelector('.card-right')?.appendChild(tools)}
       tools.innerHTML=`<button type="button" class="mini-btn edit-card" data-card="${card.id}">Editar cliente</button><button type="button" class="mini-btn add-action" data-card="${card.id}">+ Nova ação</button><button type="button" class="mini-btn complete-card" data-card="${card.id}">✓ Concluir chamado</button>`;
+    });
+    flagRecurrentClients();
+  }
+  function clientCode(text){
+    const m=clean(text).match(/^(\d{1,4})/);
+    return m?m[1]:null;
+  }
+  function flagRecurrentClients(){
+    const freq={};
+    document.querySelectorAll('#records-root .card-name,#records-root .resolved-name').forEach(el=>{
+      const code=clientCode(el.textContent);if(code)freq[code]=(freq[code]||0)+1;
+    });
+    getCards().forEach(card=>{
+      const code=clientCode(card.querySelector('.card-name')?.textContent);
+      const others=code?Math.max(0,(freq[code]||0)-1):0;
+      let badge=card.querySelector('.recurrence-badge');
+      if(others>0){
+        if(!badge){badge=document.createElement('div');badge.className='recurrence-badge';card.querySelector('.card-right')?.insertBefore(badge,card.querySelector('.update-count'))}
+        badge.textContent=`🔁 Cliente já abriu ${others} chamado${others===1?'':'s'} antes`;
+        badge.title='Identificado pelos 4 primeiros números do código do cliente no início do nome — verifique se realmente é o mesmo cliente antes de agir, pois números podem coincidir entre clientes diferentes.';
+      }else if(badge)badge.remove();
     });
   }
   function calculateTotals(){
@@ -1476,33 +1489,9 @@ body.editing [data-editable="true"]{outline:1px dashed var(--gold);outline-offse
       const resolvedCount=document.querySelectorAll(`#${cfg.section} .resolved-item`).length;resolvedTotal+=resolvedCount;
       const heading=document.querySelector(`#${cfg.section} .resolved-toggle h3`);if(heading)heading.textContent=`✓ Chamados Resolvidos — ${cfg.label} (${resolvedCount})`;
     });
-    setText('footer-summary',`Relatório gerado com base na planilha de SAC exportada em 27/07/2026 · Equipe Manutenção Portaria & Varejo · ${totals.open} atendimentos abertos · ${resolvedTotal} resolvidos no período`);
-    updateActionRecommendation(totals);
+    setText('footer-summary',`Relatório gerado com base na planilha de SAC exportada em 27/07/2026 · Todas as equipes · ${totals.open} atendimentos abertos · ${resolvedTotal} resolvidos no período`);
     return totals;
   }
-  function updateActionRecommendation(totals){
-    const box=document.getElementById('action-recommendation'),text=document.getElementById('action-recommendation-text'),btn=document.getElementById('action-recommendation-btn');
-    if(!box)return;
-    if(totals.today>0||totals.noOwner>0){
-      const parts=[];
-      if(totals.today>0)parts.push(`${totals.today} chamado${totals.today===1?'':'s'} com prazo vencido ou hoje`);
-      if(totals.noOwner>0)parts.push(`${totals.noOwner} sem responsável definido`);
-      text.textContent=`${parts.join(' + ')} — comece por aqui.`;
-      box.classList.remove('ok');btn.style.display='inline-flex';btn.dataset.target='today';
-    }else if(totals.none>0){
-      text.textContent=`${totals.none} chamado${totals.none===1?'':'s'} sem prazo definido — risco de perder o controle do caso.`;
-      box.classList.remove('ok');btn.style.display='inline-flex';btn.dataset.target='none';
-    }else{
-      text.textContent='Nenhuma pendência crítica identificada no momento. Bom trabalho!';
-      box.classList.add('ok');btn.style.display='none';
-    }
-  }
-  document.getElementById('action-recommendation-btn')?.addEventListener('click',()=>{
-    const target=document.getElementById('action-recommendation-btn').dataset.target||'today';
-    document.querySelector('[data-view-target="management"]')?.click();
-    document.querySelector(`.filter-btn[data-filter="${target}"]`)?.click();
-    document.querySelector('.toolbar')?.scrollIntoView({behavior:'smooth',block:'start'});
-  });
   let activeFilter='all';
   function applyFilters(){
     const cards=getCards(),term=document.getElementById('search').value.toLocaleLowerCase('pt-BR').trim();let visible=0;
@@ -1653,20 +1642,30 @@ body.editing [data-editable="true"]{outline:1px dashed var(--gold);outline-offse
   document.querySelectorAll('.filter-btn').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');activeFilter=btn.dataset.filter;applyFilters()}));
   document.getElementById('export-pdf').addEventListener('click',()=>window.print());
   document.getElementById('export-excel').addEventListener('click',()=>{
-    const rows=[['Equipe','OS','Cliente','Origem','Categoria','Data inicial','Data final atual','Dias em aberto','Tempo planejado','Quantidade de prorrogações','Histórico de datas','Situação do prazo','Resumo','Descrição','Responsável','Ação','Data da ação','Evidência']];
+    const rows=[['Status','Equipe','OS','Cliente','Origem','Categoria','Data inicial','Data final atual','Dias em aberto','Tempo planejado','Quantidade de prorrogações','Histórico de datas','Situação do prazo','Resumo','Descrição','Responsável','Ação','Data da ação','Evidência']];
     getCards().filter(c=>!c.classList.contains('filtered-out')).forEach(c=>{
       let history=[];try{history=JSON.parse(c.dataset.deadlineHistory||'[]')}catch(e){history=[]}
       const historyText=history.map(h=>h.previousDate?`${formatDate(h.previousDate)} → ${formatDate(h.date)} (${h.type})`:`${formatDate(h.date)} (${h.type})`).join(' | ');
-      const base=[TEAMS[c.dataset.team]?.label||'Portaria',clean(c.querySelector('.card-id')?.textContent),clean(c.querySelector('.card-name')?.textContent),c.dataset.origin||'',c.dataset.category||'',formatDate(c.dataset.openDate),formatDate(c.dataset.deadlineDate),clean(c.querySelector('.age-num')?.textContent),c.dataset.openDate&&c.dataset.deadlineDate?daysBetween(c.dataset.openDate,c.dataset.deadlineDate):'',c.dataset.extensionCount||'0',historyText,clean(c.querySelector('.prazo-badge')?.textContent),clean(c.querySelector('.card-desc')?.textContent),clean(c.querySelector('.problem-box p')?.textContent)];
+      const base=['Aberto',TEAMS[c.dataset.team]?.label||'Portaria',clean(c.querySelector('.card-id')?.textContent),clean(c.querySelector('.card-name')?.textContent),c.dataset.origin||'',c.dataset.category||'',formatDate(c.dataset.openDate),formatDate(c.dataset.deadlineDate),clean(c.querySelector('.age-num')?.textContent),c.dataset.openDate&&c.dataset.deadlineDate?daysBetween(c.dataset.openDate,c.dataset.deadlineDate):'',c.dataset.extensionCount||'0',historyText,clean(c.querySelector('.prazo-badge')?.textContent),clean(c.querySelector('.card-desc')?.textContent),clean(c.querySelector('.problem-box p')?.textContent)];
       const steps=[...c.querySelectorAll('.step')];if(!steps.length)rows.push([...base,'','','','']);
       steps.forEach(s=>{const dates=[...s.querySelectorAll('.step-date')].map(x=>clean(x.textContent));rows.push([...base,clean(s.querySelector('.step-responsible')?.textContent).replace('Responsável:','').trim(),clean(s.querySelector('.step-text')?.textContent),dates[0]||'',(dates.find(x=>/^Evidência:/i.test(x))||'').replace(/^Evidência:\s*/i,'')])});
+    });
+    document.querySelectorAll('.resolved-item').forEach(item=>{
+      const teamKey=Object.keys(TEAMS).find(k=>item.closest(`#${TEAMS[k].section}`));
+      const nameRaw=clean(item.querySelector('.resolved-name')?.textContent);
+      const osMatch=nameRaw.match(/·\s*OS\s*([\w./-]+)\s*$/i);
+      const client=osMatch?nameRaw.slice(0,osMatch.index).replace(/·\s*$/,'').trim():nameRaw;
+      const detail=clean(item.querySelector('.resolved-detail')?.textContent);
+      const dateClean=clean(item.querySelector('.resolved-date')?.textContent).replace(/^[✓ℹ]\s*/,'');
+      const base=['Resolvido',TEAMS[teamKey]?.label||'—',osMatch?osMatch[1]:'',client,...Array(9).fill(''),detail,'']; // Origem,Categoria,DataInicial,DataFinal,DiasAberto,TempoPlanejado,QtdProrrog,HistDatas,SituacaoPrazo,[Resumo=detail],Descricao
+      const steps=[...(item.querySelector('.resolved-history')?.querySelectorAll('.step')||[])];
+      if(!steps.length){rows.push([...base,'',detail,dateClean,'']);return}
+      steps.forEach(s=>{const dates=[...s.querySelectorAll('.step-date')].map(x=>clean(x.textContent));rows.push([...base,clean(s.querySelector('.step-responsible')?.textContent).replace('Responsável:','').trim(),clean(s.querySelector('.step-text')?.textContent),dates[0]||dateClean,(dates.find(x=>/^Evidência:/i.test(x))||'').replace(/^Evidência:\s*/i,'')])});
     });
     const esc=v=>String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     const table=`<html><head><meta charset="UTF-8"></head><body><table border="1">${rows.map(r=>`<tr>${r.map(v=>`<td>${esc(v)}</td>`).join('')}</tr>`).join('')}</table></body></html>`;
     const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff',table],{type:'application/vnd.ms-excel'}));a.download=`Relatorio_SAC_NewLine_${new Date().toISOString().slice(0,10)}.xls`;a.click();URL.revokeObjectURL(a.href);
   });
-  document.querySelector('.header-actions').insertAdjacentHTML('beforeend','<button class="action-btn" id="restore-base">Restaurar base</button>');
-  document.getElementById('restore-base').addEventListener('click',()=>{if(confirm('Deseja apagar as alterações feitas neste navegador e restaurar os dados originais?')){localStorage.removeItem(STORAGE_KEY);document.getElementById('records-root').innerHTML=originalRecords;decorateCards();calculateTotals();applyFilters();setText('save-state','Base restaurada')}});
 
   // ====== IMPORTAÇÃO DE PLANILHA (.xlsx) — atualiza Portaria e Varejo sem tocar nas demais equipes ======
   const MESES_PT={janeiro:1,fevereiro:2,marco:3,abril:4,maio:5,junho:6,julho:7,agosto:8,setembro:9,outubro:10,novembro:11,dezembro:12};
@@ -1872,7 +1871,7 @@ ${stepsHtml}
       return `<div class="global-search-result" data-card-id="${c.id}" style="padding:12px 10px;border-radius:8px;cursor:pointer;border-bottom:1px solid var(--border);"><div style="font-weight:650;font-size:13px;color:var(--text);">${name}</div><div style="font-size:11px;color:var(--muted);margin-top:2px;">${id} · ${team}</div></div>`;
     }).join('');
     container.querySelectorAll('.global-search-result').forEach(el=>{
-      el.addEventListener('mouseenter',()=>el.style.background='var(--surface2)');
+      el.addEventListener('mouseenter',()=>el.style.background='var(--surface-2)');
       el.addEventListener('mouseleave',()=>el.style.background='transparent');
       el.addEventListener('click',()=>{
         const card=document.getElementById(el.dataset.cardId);if(!card)return;
@@ -1926,7 +1925,6 @@ ${stepsHtml}
   document.querySelectorAll('.view-tab').forEach(tab=>tab.addEventListener('click',()=>{
     document.querySelectorAll('.view-tab').forEach(t=>t.classList.remove('active'));tab.classList.add('active');document.body.dataset.view=tab.dataset.viewTarget;window.scrollTo({top:0,behavior:'smooth'});
   }));
-  document.getElementById('edit-mode').addEventListener('click',()=>{document.querySelector('[data-view-target="management"]').click()});
   decorateCards();calculateTotals();applyFilters();
   document.querySelectorAll('.prazo-badge.today,.prazo-badge.overdue').forEach(b=>b.closest('.card')?.classList.add('open'));
 </script>
