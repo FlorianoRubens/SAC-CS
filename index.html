@@ -1648,6 +1648,19 @@ body.editing [data-editable="true"]{outline:1px dashed var(--gold);outline-offse
   }
   document.getElementById('record-form').addEventListener('submit',e=>{
     e.preventDefault();const mode=e.currentTarget.dataset.mode,id=document.getElementById('f-card-id').value;
+    if(mode!=='action'){
+      const invalid=[...e.currentTarget.querySelectorAll('[required]')].find(el=>!el.closest('.field')?.style.display?.includes('none')&&!el.value.trim());
+      if(invalid){
+        invalid.style.borderColor='var(--danger)';invalid.style.boxShadow='0 0 0 2px color-mix(in srgb,var(--danger) 30%,transparent)';
+        invalid.scrollIntoView({behavior:'smooth',block:'center'});invalid.focus();
+        let warn=invalid.parentElement.querySelector('.field-error');
+        if(!warn){warn=document.createElement('div');warn.className='field-error';warn.style.cssText='color:var(--danger);font-size:11px;font-weight:650;margin-top:4px;';invalid.insertAdjacentElement('afterend',warn)}
+        warn.textContent='Preencha este campo antes de salvar.';
+        const clearWarn=()=>{invalid.style.borderColor='';invalid.style.boxShadow='';warn.remove();invalid.removeEventListener('input',clearWarn)};
+        invalid.addEventListener('input',clearWarn);
+        return;
+      }
+    }
     if(mode==='action'){
       const actionCard=document.getElementById(id);const newDeadline=document.getElementById('f-action-newdate').value;let actionText=document.getElementById('f-action').value;
       if(newDeadline){
