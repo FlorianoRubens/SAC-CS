@@ -346,6 +346,8 @@ body[data-view="management"] .dashboard-shell{display:none}
 /* ---------- Ferramentas de edição ---------- */
 .edit-tools{display:flex;gap:6px;justify-content:flex-end;padding:0 18px 14px}
 .mini-btn{border:1px solid var(--border);background:var(--surface);color:var(--accent);border-radius:var(--r-xs);padding:6px 9px;font:700 9.5px var(--font);transition:.18s var(--ease)}
+.mini-btn.confirm-validation{color:var(--success);border-color:color-mix(in srgb,var(--success) 40%,transparent);background:color-mix(in srgb,var(--success) 8%,transparent)}
+.mini-btn.confirm-validation:hover{background:color-mix(in srgb,var(--success) 16%,transparent)}
 .mini-btn:hover{background:var(--brand-soft)}
 .mini-btn.complete-card{background:var(--brand);border-color:var(--brand);color:#fff}
 .mini-btn.complete-card:hover{filter:brightness(1.1)}
@@ -598,6 +600,15 @@ body.editing [data-editable="true"]{outline:1px dashed var(--gold);outline-offse
 <div class="edit-notice">Modo de edição ativo: clique nos textos destacados para alterar. As modificações são salvas automaticamente neste navegador.</div>
 <div class="risk-legend" aria-label="Legenda de criticidade"><span><i style="background:#c74343"></i>Prazo hoje ou vencido</span><span><i style="background:#dc851f"></i>Sem prazo definido</span><span><i style="background:#d4a928"></i>Prorrogado</span><span><i style="background:#79a725"></i>Dentro do prazo</span></div>
 <div id="records-root">
+
+<div class="resolved-section open" id="pending-validation-section" style="border:1px solid color-mix(in srgb,#c9922f 45%,transparent);">
+  <div class="resolved-toggle" onclick="toggleResolved('pending-validation-section')" style="background:color-mix(in srgb,#c9922f 10%,transparent);">
+    <div style="width:8px;height:8px;border-radius:50%;background:#c9922f;flex-shrink:0"></div>
+    <h3>⏳ Aguardando Validação do Cliente (<span id="pending-validation-count">0</span>)</h3>
+    <svg fill="none" viewBox="0 0 10 6" width="12" height="12" stroke="currentColor" stroke-width="1.5"><path d="M1 1l4 4 4-4"/></svg>
+  </div>
+  <div class="resolved-list" id="pending-validation-list"></div>
+</div>
 
 <!-- ══════════════ PORTARIA ══════════════ -->
 <div class="section-label">
@@ -1353,7 +1364,7 @@ body.editing [data-editable="true"]{outline:1px dashed var(--gold);outline-offse
       <div class="field full"><label>Resumo atual</label><textarea id="f-summary" required></textarea></div>
       <div class="field full"><label>Descrição detalhada</label><textarea id="f-description"></textarea></div>
       <div class="field"><label>Responsável pela ação atual</label><input id="f-responsible" placeholder="Nome do responsável"></div>
-      <div class="field"><label>Status da ação</label><select id="f-action-type"><option value="waiting">Aguardando</option><option value="action">Em andamento</option><option value="scheduled">Agendado</option><option value="done">Concluído</option><option value="alert">Alerta</option></select></div>
+      <div class="field"><label>Status da ação</label><select id="f-action-type"><option value="action">Em andamento</option><option value="scheduled">Agendado</option><option value="done">Concluído</option></select></div>
       <div class="field full"><label>Ação/atualização</label><textarea id="f-action" placeholder="Descreva a providência, retorno ou próximo passo"></textarea></div>
       <div class="field"><label>Nova data de prazo (prorrogação)</label><input id="f-action-newdate" type="date"></div>
       <div class="field full"><label>Evidência ou referência</label><input id="f-evidence" placeholder="Nome do arquivo, link, número da OS ou outra referência"></div>
@@ -1380,7 +1391,7 @@ body.editing [data-editable="true"]{outline:1px dashed var(--gold);outline-offse
       <div class="field"><label>Responsável pela conclusão</label><input id="complete-owner" required placeholder="Nome do responsável"></div>
       <div class="field full"><label>Solução aplicada</label><textarea id="complete-solution" required placeholder="Descreva o que foi realizado e o resultado obtido"></textarea></div>
       <div class="field full"><label>Evidência ou referência</label><input id="complete-evidence" placeholder="OS, arquivo, link, protocolo ou outra evidência"></div>
-      <div class="field full"><label>Validação final</label><select id="complete-validation"><option>Resolvido e validado</option><option>Resolvido — aguardando validação do cliente</option><option>Resolvido parcialmente</option></select></div>
+      <div class="field full"><label>Validação final</label><select id="complete-validation"><option>Resolvido e validado</option><option>Resolvido — aguardando validação do cliente</option></select></div>
     </div>
     <div class="modal-foot"><button type="button" data-close-complete>Cancelar</button><button type="submit" class="save">Confirmar conclusão</button></div>
   </form>
@@ -1553,6 +1564,7 @@ body.editing [data-editable="true"]{outline:1px dashed var(--gold);outline-offse
       const heading=document.querySelector(`#${cfg.section} .resolved-toggle h3`);if(heading)heading.textContent=`✓ Chamados Resolvidos — ${cfg.label} (${resolvedCount})`;
     });
     setText('footer-summary',`Relatório gerado com base na planilha de SAC exportada em 27/07/2026 · Todas as equipes · ${totals.open} atendimentos abertos · ${resolvedTotal} resolvidos no período`);
+    setText('pending-validation-count',document.querySelectorAll('#pending-validation-list .resolved-item').length);
     applyResolvedDateFilter();
     return totals;
   }
@@ -1599,7 +1611,7 @@ body.editing [data-editable="true"]{outline:1px dashed var(--gold);outline-offse
   function openModal(mode,cardId=''){
     const form=document.getElementById('record-form');form.dataset.mode=mode;form.dataset.originalSnapshot='{}';document.getElementById('f-card-id').value=cardId;
     ['f-os','f-client','f-category','f-date','f-days','f-planned-days','f-deadline','f-summary','f-description','f-responsible','f-action','f-evidence','f-action-newdate'].forEach(id=>document.getElementById(id).value='');
-    document.getElementById('f-team').value='portaria';document.getElementById('f-origin').value='SAC';document.getElementById('f-deadline-type').value='none';document.getElementById('f-action-type').value='waiting';
+    document.getElementById('f-team').value='portaria';document.getElementById('f-origin').value='SAC';document.getElementById('f-deadline-type').value='none';document.getElementById('f-action-type').value='action';
     const card=document.getElementById(cardId);
     if(card){
       document.getElementById('f-team').value=card.dataset.team||'portaria';
@@ -1719,19 +1731,40 @@ body.editing [data-editable="true"]{outline:1px dashed var(--gold);outline-offse
     e.preventDefault();const card=document.getElementById(document.getElementById('complete-card-id').value);if(!card)return;
     const team=card.dataset.team||'portaria',client=clean(card.querySelector('.card-name')?.textContent),os=clean(card.querySelector('.card-id')?.textContent).split('·')[0];
     const date=formatDate(document.getElementById('complete-date').value),owner=document.getElementById('complete-owner').value.trim(),solution=document.getElementById('complete-solution').value.trim(),evidence=document.getElementById('complete-evidence').value.trim(),validation=document.getElementById('complete-validation').value;
+    const isPending=/aguardando validação/i.test(validation);
     addAction(card,'done',owner,`Chamado concluído em ${date}. ${solution} Validação: ${validation}.`,evidence);
-    const item=document.createElement('div');item.className='resolved-item';item.dataset.completedFrom=card.id;
-    const check=document.createElement('div');check.className='resolved-check';check.innerHTML='<svg viewBox="0 0 10 8" fill="none" stroke="var(--success)" stroke-width="1.8"><path d="M1 4l3 3 5-6"/></svg>';
+    const item=document.createElement('div');item.className='resolved-item';item.dataset.completedFrom=card.id;item.dataset.team=team;
+    const check=document.createElement('div');check.className='resolved-check';
+    check.innerHTML=isPending?'<span style="font-size:13px;line-height:1;">⏳</span>':'<svg viewBox="0 0 10 8" fill="none" stroke="var(--success)" stroke-width="1.8"><path d="M1 4l3 3 5-6"/></svg>';
+    if(isPending)check.style.cssText='background:color-mix(in srgb,#c9922f 15%,transparent);border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;flex-shrink:0;';
     const info=document.createElement('div');info.className='resolved-info';
     const name=document.createElement('div');name.className='resolved-name';name.textContent=`${client} · ${os}`;
     const detail=document.createElement('div');detail.className='resolved-detail';detail.textContent=`${solution} Responsável: ${owner}. ${validation}.${evidence?` Evidência: ${evidence}.`:''}`;
-    const resolvedDate=document.createElement('div');resolvedDate.className='resolved-date';resolvedDate.textContent=`✓ Resolvido em ${date}`;
+    const resolvedDate=document.createElement('div');resolvedDate.className='resolved-date';resolvedDate.textContent=isPending?`⏳ Atendido em ${date} — aguardando validação`:`✓ Resolvido em ${date}`;
     const history=document.createElement('details');history.className='resolved-history';const summary=document.createElement('summary');summary.textContent='Ver histórico completo do cliente';const historyContent=card.querySelector('.timeline-wrap')?.cloneNode(true);history.append(summary);if(historyContent)history.append(historyContent);
-    info.append(name,detail,resolvedDate,history);item.append(check,info);
-    const section=document.getElementById(TEAMS[team]?.section||'res-p');section.querySelector('.resolved-list').prepend(item);section.classList.add('open');card.remove();
-    calculateTotals();saveRecords();applyFilters();closeCompleteModal();setText('save-state','Chamado concluído');
+    info.append(name,detail,resolvedDate);
+    if(isPending){
+      const confirmBtn=document.createElement('button');confirmBtn.type='button';confirmBtn.className='mini-btn confirm-validation';confirmBtn.style.marginTop='6px';confirmBtn.textContent='✓ Cliente validou';
+      info.append(confirmBtn);
+    }
+    info.append(history);item.append(check,info);
+    if(isPending){document.getElementById('pending-validation-list').prepend(item)}
+    else{const section=document.getElementById(TEAMS[team]?.section||'res-p');section.querySelector('.resolved-list').prepend(item);section.classList.add('open')}
+    card.remove();
+    calculateTotals();saveRecords();applyFilters();closeCompleteModal();setText('save-state',isPending?'Chamado atendido — aguardando validação':'Chamado concluído');
   });
   document.addEventListener('click',e=>{
+    const confirmValidation=e.target.closest('.confirm-validation');
+    if(confirmValidation){
+      const item=confirmValidation.closest('.resolved-item'),team=item.dataset.team||'portaria';
+      const check=item.querySelector('.resolved-check');check.style.cssText='';check.innerHTML='<svg viewBox="0 0 10 8" fill="none" stroke="var(--success)" stroke-width="1.8"><path d="M1 4l3 3 5-6"/></svg>';
+      const dateEl=item.querySelector('.resolved-date');if(dateEl)dateEl.textContent=dateEl.textContent.replace('⏳ Atendido em','✓ Resolvido em').replace(' — aguardando validação','');
+      const detailEl=item.querySelector('.resolved-detail');if(detailEl)detailEl.textContent+=' Validado pelo cliente.';
+      confirmValidation.remove();
+      const section=document.getElementById(TEAMS[team]?.section||'res-p');section.querySelector('.resolved-list').prepend(item);section.classList.add('open');
+      calculateTotals();saveRecords();setText('save-state','Validação confirmada pelo cliente');
+      return;
+    }
     const edit=e.target.closest('.edit-card'),action=e.target.closest('.add-action'),complete=e.target.closest('.complete-card');if(edit){e.stopPropagation();openModal('edit',edit.dataset.card)}if(action){e.stopPropagation();openModal('action',action.dataset.card)}if(complete){e.stopPropagation();openCompleteModal(complete.dataset.card)}
     if(e.target.matches('[data-close-modal]')||e.target===document.getElementById('record-modal'))closeModal();
     if(e.target.matches('[data-close-complete]')||e.target===document.getElementById('complete-modal'))closeCompleteModal();
@@ -1751,13 +1784,14 @@ body.editing [data-editable="true"]{outline:1px dashed var(--gold);outline-offse
       steps.forEach(s=>{const dates=[...s.querySelectorAll('.step-date')].map(x=>clean(x.textContent));rows.push([...base,clean(s.querySelector('.step-responsible')?.textContent).replace('Responsável:','').trim(),clean(s.querySelector('.step-text')?.textContent),dates[0]||'',(dates.find(x=>/^Evidência:/i.test(x))||'').replace(/^Evidência:\s*/i,'')])});
     });
     document.querySelectorAll('.resolved-item').forEach(item=>{
-      const teamKey=Object.keys(TEAMS).find(k=>item.closest(`#${TEAMS[k].section}`));
+      const teamKey=item.dataset.team||Object.keys(TEAMS).find(k=>item.closest(`#${TEAMS[k].section}`));
+      const isPending=!!item.closest('#pending-validation-section');
       const nameRaw=clean(item.querySelector('.resolved-name')?.textContent);
       const osMatch=nameRaw.match(/·\s*OS\s*([\w./-]+)\s*$/i);
       const client=osMatch?nameRaw.slice(0,osMatch.index).replace(/·\s*$/,'').trim():nameRaw;
       const detail=clean(item.querySelector('.resolved-detail')?.textContent);
-      const dateClean=clean(item.querySelector('.resolved-date')?.textContent).replace(/^[✓ℹ]\s*/,'');
-      const base=['Resolvido',TEAMS[teamKey]?.label||'—',osMatch?osMatch[1]:'',client,...Array(9).fill(''),detail,'']; // Origem,Categoria,DataInicial,DataFinal,DiasAberto,TempoPlanejado,QtdProrrog,HistDatas,SituacaoPrazo,[Resumo=detail],Descricao
+      const dateClean=clean(item.querySelector('.resolved-date')?.textContent).replace(/^[✓ℹ⏳]\s*/,'');
+      const base=[isPending?'Aguardando Validação':'Resolvido',TEAMS[teamKey]?.label||'—',osMatch?osMatch[1]:'',client,...Array(9).fill(''),detail,'']; // Origem,Categoria,DataInicial,DataFinal,DiasAberto,TempoPlanejado,QtdProrrog,HistDatas,SituacaoPrazo,[Resumo=detail],Descricao
       const steps=[...(item.querySelector('.resolved-history')?.querySelectorAll('.step')||[])];
       if(!steps.length){rows.push([...base,'',detail,dateClean,'']);return}
       steps.forEach(s=>{const dates=[...s.querySelectorAll('.step-date')].map(x=>clean(x.textContent));rows.push([...base,clean(s.querySelector('.step-responsible')?.textContent).replace('Responsável:','').trim(),clean(s.querySelector('.step-text')?.textContent),dates[0]||dateClean,(dates.find(x=>/^Evidência:/i.test(x))||'').replace(/^Evidência:\s*/i,'')])});
