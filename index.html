@@ -567,6 +567,10 @@ body.editing [data-editable="true"]{outline:1px dashed var(--gold);outline-offse
       </div>
     </article>
   </div>
+  <article class="panel" style="margin-bottom:var(--gap);">
+    <div class="panel-title">Maiores problemas registrados (por categoria)</div>
+    <div id="category-chart" style="display:flex;flex-direction:column;gap:9px;margin-top:12px;"></div>
+  </article>
   <article class="panel auto-insights">
     <div class="panel-head"><h2>Leitura gerencial automática</h2><small>atualizada conforme os registros</small></div>
     <div class="insight-cards">
@@ -1348,7 +1352,7 @@ body.editing [data-editable="true"]{outline:1px dashed var(--gold);outline-offse
 </div>
 </main>
 <div class="modal-backdrop" id="record-modal">
-  <form class="modal" id="record-form">
+  <form class="modal" id="record-form" novalidate>
     <div class="modal-head"><h3 id="modal-title">Novo registro</h3><button type="button" class="modal-close" data-close-modal>×</button></div>
     <div class="modal-body">
       <input type="hidden" id="f-card-id">
@@ -1383,7 +1387,7 @@ body.editing [data-editable="true"]{outline:1px dashed var(--gold);outline-offse
   </div>
 </div>
 <div class="modal-backdrop" id="complete-modal">
-  <form class="modal" id="complete-form">
+  <form class="modal" id="complete-form" novalidate>
     <div class="modal-head"><h3>Concluir chamado</h3><button type="button" class="modal-close" data-close-complete>×</button></div>
     <div class="modal-body">
       <input type="hidden" id="complete-card-id">
@@ -1570,8 +1574,18 @@ body.editing [data-editable="true"]{outline:1px dashed var(--gold);outline-offse
     });
     setText('footer-summary',`Relatório gerado com base na planilha de SAC exportada em 27/07/2026 · Todas as equipes · ${totals.open} atendimentos abertos · ${resolvedTotal} resolvidos no período`);
     setText('pending-validation-count',document.querySelectorAll('#pending-validation-list .resolved-item').length);
+    updateCategoryChart(cards);
     applyResolvedDateFilter();
     return totals;
+  }
+  function updateCategoryChart(cards){
+    const counts={};
+    cards.forEach(c=>{const cat=(c.dataset.category||'').trim();if(cat)counts[cat]=(counts[cat]||0)+1});
+    const entries=Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,8);
+    const container=document.getElementById('category-chart');if(!container)return;
+    if(!entries.length){container.innerHTML='<div style="font-size:12px;color:var(--muted);padding:4px 0;">Nenhuma categoria registrada ainda nos chamados abertos.</div>';return}
+    const max=entries[0][1];
+    container.innerHTML=entries.map(([cat,n])=>`<div class="segment-row"><span>${escHtml(cat)}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.max(4,n/max*100)}%;background:var(--accent)"></div></div><b>${n}</b></div>`).join('');
   }
   let activeFilter='all';
   function applyFilters(){
@@ -1733,7 +1747,18 @@ body.editing [data-editable="true"]{outline:1px dashed var(--gold);outline-offse
     decorateCards();calculateTotals();saveRecords();applyFilters();closeModal();
   });
   document.getElementById('complete-form').addEventListener('submit',e=>{
-    e.preventDefault();const card=document.getElementById(document.getElementById('complete-card-id').value);if(!card)return;
+    e.preventDefault();
+    const invalidComplete=[...e.currentTarget.querySelectorAll('[required]')].find(el=>!el.value.trim());
+    if(invalidComplete){
+      invalidComplete.style.borderColor='var(--danger)';invalidComplete.style.boxShadow='0 0 0 2px color-mix(in srgb,var(--danger) 30%,transparent)';
+      invalidComplete.scrollIntoView({behavior:'smooth',block:'center'});invalidComplete.focus();
+      let warn=invalidComplete.parentElement.querySelector('.field-error');
+      if(!warn){warn=document.createElement('div');warn.className='field-error';warn.style.cssText='color:var(--danger);font-size:11px;font-weight:650;margin-top:4px;';invalidComplete.insertAdjacentElement('afterend',warn)}
+      warn.textContent='Preencha este campo antes de salvar.';
+      const clearWarn=()=>{invalidComplete.style.borderColor='';invalidComplete.style.boxShadow='';warn.remove();invalidComplete.removeEventListener('input',clearWarn)};
+      invalidComplete.addEventListener('input',clearWarn);
+      return;
+    }const card=document.getElementById(document.getElementById('complete-card-id').value);if(!card)return;
     const team=card.dataset.team||'portaria',client=clean(card.querySelector('.card-name')?.textContent),os=clean(card.querySelector('.card-id')?.textContent).split('·')[0];
     const date=formatDate(document.getElementById('complete-date').value),owner=document.getElementById('complete-owner').value.trim(),solution=document.getElementById('complete-solution').value.trim(),evidence=document.getElementById('complete-evidence').value.trim(),validation=document.getElementById('complete-validation').value;
     const isPending=/aguardando validação/i.test(validation);
