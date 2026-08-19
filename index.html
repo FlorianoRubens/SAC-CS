@@ -568,7 +568,7 @@ body.editing [data-editable="true"]{outline:1px dashed var(--gold);outline-offse
     </article>
   </div>
   <article class="panel" style="margin-bottom:var(--gap);">
-    <div class="panel-title">Maiores problemas registrados (por categoria)</div>
+    <div class="panel-title">Maiores problemas registrados (abertos + resolvidos)</div>
     <div id="category-chart" style="display:flex;flex-direction:column;gap:9px;margin-top:12px;"></div>
   </article>
   <article class="panel auto-insights">
@@ -1581,9 +1581,10 @@ body.editing [data-editable="true"]{outline:1px dashed var(--gold);outline-offse
   function updateCategoryChart(cards){
     const counts={};
     cards.forEach(c=>{const cat=(c.dataset.category||'').trim();if(cat)counts[cat]=(counts[cat]||0)+1});
+    document.querySelectorAll('.resolved-item').forEach(item=>{const cat=(item.dataset.category||'').trim();if(cat)counts[cat]=(counts[cat]||0)+1});
     const entries=Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,8);
     const container=document.getElementById('category-chart');if(!container)return;
-    if(!entries.length){container.innerHTML='<div style="font-size:12px;color:var(--muted);padding:4px 0;">Nenhuma categoria registrada ainda nos chamados abertos.</div>';return}
+    if(!entries.length){container.innerHTML='<div style="font-size:12px;color:var(--muted);padding:4px 0;">Nenhuma categoria registrada ainda nos chamados.</div>';return}
     const max=entries[0][1];
     container.innerHTML=entries.map(([cat,n])=>`<div class="segment-row"><span>${escHtml(cat)}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.max(4,n/max*100)}%;background:var(--accent)"></div></div><b>${n}</b></div>`).join('');
   }
@@ -1763,7 +1764,7 @@ body.editing [data-editable="true"]{outline:1px dashed var(--gold);outline-offse
     const date=formatDate(document.getElementById('complete-date').value),owner=document.getElementById('complete-owner').value.trim(),solution=document.getElementById('complete-solution').value.trim(),evidence=document.getElementById('complete-evidence').value.trim(),validation=document.getElementById('complete-validation').value;
     const isPending=/aguardando validação/i.test(validation);
     addAction(card,'done',owner,`Chamado concluído em ${date}. ${solution} Validação: ${validation}.`,evidence);
-    const item=document.createElement('div');item.className='resolved-item';item.dataset.completedFrom=card.id;item.dataset.team=team;
+    const item=document.createElement('div');item.className='resolved-item';item.dataset.completedFrom=card.id;item.dataset.team=team;item.dataset.category=card.dataset.category||'';
     const check=document.createElement('div');check.className='resolved-check';
     check.innerHTML=isPending?'<span style="font-size:13px;line-height:1;">⏳</span>':'<svg viewBox="0 0 10 8" fill="none" stroke="var(--success)" stroke-width="1.8"><path d="M1 4l3 3 5-6"/></svg>';
     if(isPending)check.style.cssText='background:color-mix(in srgb,#c9922f 15%,transparent);border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;flex-shrink:0;';
