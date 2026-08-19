@@ -1479,7 +1479,21 @@ body.editing [data-editable="true"]{outline:1px dashed var(--gold);outline-offse
     const state=document.getElementById('save-state');state?.classList.remove('saved-flash');void state?.offsetWidth;state?.classList.add('saved-flash');
     setTimeout(()=>{setText('save-state','Salvamento automático');state?.classList.remove('saved-flash')},1500);
   }
+  function ensureTeamSection(team){
+    const cfg=TEAMS[team]||TEAMS.portaria;
+    let section=document.getElementById(cfg.section);
+    if(!section){
+      const label=document.createElement('div');label.className='section-label';
+      label.innerHTML=`<span class="section-dot" style="background:var(--accent)"></span><h2>Equipe ${cfg.label}</h2><div class="section-line"></div>`;
+      section=document.createElement('div');section.className='resolved-section';section.id=cfg.section;
+      section.innerHTML=`<div class="resolved-toggle" onclick="toggleResolved('${cfg.section}')"><div style="width:8px;height:8px;border-radius:50%;background:var(--success);flex-shrink:0"></div><h3>✓ Chamados Resolvidos — ${cfg.label} (0)</h3><svg fill="none" viewBox="0 0 10 6" width="12" height="12" stroke="currentColor" stroke-width="1.5"><path d="M1 1l4 4 4-4"/></svg></div><div class="resolved-list"></div>`;
+      document.getElementById('records-root').append(label,section);
+      console.warn(`Seção da equipe "${cfg.label}" estava ausente e foi recriada automaticamente.`);
+    }
+    return section;
+  }
   function decorateCards(){
+    Object.keys(TEAMS).forEach(ensureTeamSection);
     getCards().forEach(card=>{
       if(!card.dataset.team)card.dataset.team=card.id.startsWith('cv')?'varejo':'portaria';
       if(!card.dataset.openDate){
@@ -1712,7 +1726,7 @@ body.editing [data-editable="true"]{outline:1px dashed var(--gold);outline-offse
     if(mode==='new'){
       card=document.createElement('div');card.className='card';card.id=cardId;card.dataset.team=team;
       card.innerHTML=`<div class="card-header" onclick="toggle('${cardId}')"><div class="card-meta"><div class="card-id">OS ${document.getElementById('f-os').value||'Sem OS'} · Abertura: ${formatDate(document.getElementById('f-date').value)||'Não informada'} <span class="new-tag">✦ Novo</span></div><div class="card-name"></div><div class="card-desc"></div><div class="card-tags"></div></div><div class="card-right"><div class="age-bar age-fresh"><span class="age-num"></span><div class="age-label"><span>aberto há</span><span>dias</span></div></div><div class="prazo-badge ${deadlineType}"></div><div class="update-count">Registro editável</div><div class="toggle-btn">ver histórico <svg fill="none" viewBox="0 0 10 6" width="10" height="6" stroke="currentColor" stroke-width="1.5"><path d="M1 1l4 4 4-4"/></svg></div></div></div><div class="timeline-wrap"><div class="timeline-intro">Histórico de ações e responsáveis.</div><div class="problem-box"><label>Descrição</label><p></p></div><div class="abertura-row">Abertura em <strong>${formatDate(document.getElementById('f-date').value)||'data não informada'}</strong></div><div class="timeline"></div></div>`;
-      document.getElementById(TEAMS[team]?.section||'res-p').before(card);
+      ensureTeamSection(team).before(card);
     }
     card.dataset.team=team;card.dataset.origin=document.getElementById('f-origin').value;card.dataset.category=document.getElementById('f-category').value;card.dataset.openDate=openDate;card.dataset.deadlineDate=deadline;
     let deadlineHistory=[];try{deadlineHistory=JSON.parse(card.dataset.deadlineHistory||'[]')}catch(e){deadlineHistory=[]}
@@ -1742,7 +1756,7 @@ body.editing [data-editable="true"]{outline:1px dashed var(--gold);outline-offse
     if(meta?.childNodes[0])meta.childNodes[0].textContent=metaText;
     if(document.getElementById('f-date').value&&card.querySelector('.abertura-row strong'))card.querySelector('.abertura-row strong').textContent=formatDate(document.getElementById('f-date').value);
     card.querySelector('.card-name').textContent=document.getElementById('f-client').value;card.querySelector('.card-desc').textContent=document.getElementById('f-summary').value;card.querySelector('.problem-box p').textContent=document.getElementById('f-description').value;card.querySelector('.age-num').textContent=openDate?daysBetween(openDate,localToday()):'0';
-    const destination=document.getElementById(TEAMS[team]?.section||'res-p');if(card.nextElementSibling!==destination)destination.before(card);
+    const destination=ensureTeamSection(team);if(card.nextElementSibling!==destination)destination.before(card);
     const badge=card.querySelector('.prazo-badge');badge.className=`prazo-badge ${deadlineType}`;badge.innerHTML=deadlineLabel(deadline);
     if(document.getElementById('f-action').value)addAction(card,document.getElementById('f-action-type').value,document.getElementById('f-responsible').value,document.getElementById('f-action').value,document.getElementById('f-evidence').value);
     decorateCards();calculateTotals();saveRecords();applyFilters();closeModal();
@@ -1780,7 +1794,7 @@ body.editing [data-editable="true"]{outline:1px dashed var(--gold);outline-offse
     }
     info.append(history);item.append(check,info);
     if(isPending){document.getElementById('pending-validation-list').prepend(item)}
-    else{const section=document.getElementById(TEAMS[team]?.section||'res-p');section.querySelector('.resolved-list').prepend(item);section.classList.add('open')}
+    else{const section=ensureTeamSection(team);section.querySelector('.resolved-list').prepend(item);section.classList.add('open')}
     card.remove();
     calculateTotals();saveRecords();applyFilters();closeCompleteModal();setText('save-state',isPending?'Chamado atendido — aguardando validação':'Chamado concluído');
   });
@@ -1792,7 +1806,7 @@ body.editing [data-editable="true"]{outline:1px dashed var(--gold);outline-offse
       const dateEl=item.querySelector('.resolved-date');if(dateEl)dateEl.textContent=dateEl.textContent.replace('⏳ Atendido em','✓ Resolvido em').replace(' — aguardando validação','');
       const detailEl=item.querySelector('.resolved-detail');if(detailEl)detailEl.textContent+=' Validado pelo cliente.';
       confirmValidation.remove();
-      const section=document.getElementById(TEAMS[team]?.section||'res-p');section.querySelector('.resolved-list').prepend(item);section.classList.add('open');
+      const section=ensureTeamSection(team);section.querySelector('.resolved-list').prepend(item);section.classList.add('open');
       calculateTotals();saveRecords();setText('save-state','Validação confirmada pelo cliente');
       return;
     }
