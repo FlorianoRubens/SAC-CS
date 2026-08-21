@@ -457,7 +457,7 @@ body.role-viewer .editor-only{display:none !important}
 <script>
 (function(){
   window.userRole='editor';
-  function showApp(){document.getElementById('password-gate').remove()}
+  function showApp(){document.getElementById('password-gate').remove();window.initializeDataSync?.();}
   function showError(msg){const el=document.getElementById('gate-error');el.textContent=msg;el.style.display='block'}
   async function loadRole(userId){
     try{
@@ -1458,7 +1458,9 @@ body.role-viewer .editor-only{display:none !important}
   if(savedRecords)document.getElementById('records-root').innerHTML=savedRecords;
   let lastSavedAt=null;
   function reRenderAfterRemoteUpdate(){decorateCards();calculateTotals();applyFilters();setText('save-state','Atualizado por outro usuário');const state=document.getElementById('save-state');state?.classList.remove('saved-flash');void state?.offsetWidth;state?.classList.add('saved-flash');}
-  if(db){
+  function initializeDataSync(){
+    if(!db||window.__dataSyncStarted)return;
+    window.__dataSyncStarted=true;
     db.from('dashboards').select('html,updated_at').eq('id','sac_dashboard').maybeSingle().then(({data,error})=>{
       if(error){console.warn('Erro ao ler Supabase, usando dados locais:',error);return;}
       if(data&&data.html){
