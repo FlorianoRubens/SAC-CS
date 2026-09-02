@@ -853,9 +853,12 @@ body.role-viewer .editor-only{display:none !important}
         <div class="field"><label>Prazo Inicial do Contrato (meses)</label><input type="number" min="0" id="ret-prazo-inicial" placeholder="Ex.: 12"></div>
         <div class="field"><label>Possui Multa</label><select id="ret-possui-multa"><option value="">Selecione</option><option>Sim</option><option>Não</option></select></div>
       </div>
+      <div class="retencao-row cols-2" id="ret-valores-row" style="display:none">
+        <div class="field" id="ret-multa-valor-wrap" style="display:none"><label>Valor da Multa (R$)</label><input type="number" step="0.01" min="0" id="ret-multa-valor" placeholder="Ex.: 1500.00"></div>
+        <div class="field" id="ret-inadimplencia-valor-wrap" style="display:none"><label>Valor em Aberto (R$)</label><input type="number" step="0.01" min="0" id="ret-inadimplencia-valor" placeholder="Ex.: 850.00"></div>
+      </div>
       <div class="retencao-row cols-2">
-        <!-- Lista fixa por enquanto; preparar para virar cadastro editável futuramente -->
-        <div class="field"><label>Motivo do Cancelamento</label><select id="ret-motivo"><option value="">Selecione</option><option>Preço/Custo elevado</option><option>Insatisfação com o atendimento</option><option>Problemas técnicos recorrentes</option><option>Mudança de endereço/Encerramento das atividades</option><option>Contratou concorrente</option><option>Não utiliza mais o serviço</option><option>Dificuldade financeira</option><option>Outro</option></select></div>
+        <div class="field"><label>Motivo do Cancelamento</label><input type="text" id="ret-motivo" placeholder="Descreva o principal motivo informado pelo cliente"></div>
         <div class="field"><label>Inadimplência</label><select id="ret-inadimplencia"><option value="">Selecione</option><option>Sim</option><option>Não</option></select></div>
       </div>
       <div class="retencao-row cols-1">
@@ -926,9 +929,6 @@ body.role-viewer .editor-only{display:none !important}
     <div class="modal-foot"><button type="button" data-close-complete>Cancelar</button><button type="submit" class="save">Confirmar conclusão</button></div>
   </form>
 </div>
-<footer>
-  <span id="footer-summary">Relatório gerado com base na planilha de SAC exportada em 27/07/2026 · Todas as equipes · 15 atendimentos abertos · 41 resolvidos no período</span>
-</footer>
 <!-- ====== XLSX (importação de planilha) ====== -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
@@ -1161,7 +1161,6 @@ body.role-viewer .editor-only{display:none !important}
       const resolvedCount=document.querySelectorAll(`#${cfg.section} .resolved-item`).length;resolvedTotal+=resolvedCount;
       const heading=document.querySelector(`#${cfg.section} .resolved-toggle h3`);if(heading)heading.textContent=`✓ Chamados Resolvidos — ${cfg.label} (${resolvedCount})`;
     });
-    setText('footer-summary',`Relatório gerado com base na planilha de SAC exportada em 27/07/2026 · Todas as equipes · ${totals.open} atendimentos abertos · ${resolvedTotal} resolvidos no período`);
     setText('pending-validation-count',document.querySelectorAll('#pending-validation-list .resolved-item').length);
     updateCategoryChart(cards);
     applyResolvedDateFilter();
@@ -1703,6 +1702,7 @@ ${stepsHtml}
   renderSavedFilters();
 
   // ====== RETENÇÃO — cadastro e acompanhamento de clientes em cancelamento ======
+  function formatBRL(v){return v||v===0?`R$ ${Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}`:''}
   function renderRetentionList(records){
     const list=document.getElementById('retencao-list');
     setText('retencao-count',records.length);
@@ -1710,8 +1710,8 @@ ${stepsHtml}
     list.innerHTML=records.map(r=>{
       const dataFmt=r.data_assinatura?new Date(r.data_assinatura+'T00:00:00').toLocaleDateString('pt-BR'):'Não informada';
       const badges=[];
-      if(r.possui_multa)badges.push(`<span class="data-chip${r.possui_multa==='Sim'?' data-chip-alert':''}">Multa: ${escHtml(r.possui_multa)}</span>`);
-      if(r.inadimplencia)badges.push(`<span class="data-chip${r.inadimplencia==='Sim'?' data-chip-alert':''}">Inadimplência: ${escHtml(r.inadimplencia)}</span>`);
+      if(r.possui_multa)badges.push(`<span class="data-chip${r.possui_multa==='Sim'?' data-chip-alert':''}">Multa: ${escHtml(r.possui_multa)}${r.multa_valor?` (${escHtml(formatBRL(r.multa_valor))})`:''}</span>`);
+      if(r.inadimplencia)badges.push(`<span class="data-chip${r.inadimplencia==='Sim'?' data-chip-alert':''}">Inadimplência: ${escHtml(r.inadimplencia)}${r.inadimplencia_valor?` (${escHtml(formatBRL(r.inadimplencia_valor))})`:''}</span>`);
       if(r.parceiro)badges.push(`<span class="data-chip">Parceiro: ${escHtml(String(r.parceiro))}</span>`);
       return `<div class="retencao-item">
         <div class="retencao-item-name">${escHtml(r.cliente_nome||'Sem nome')}</div>
@@ -1730,6 +1730,18 @@ ${stepsHtml}
       renderRetentionList(data||[]);
     });
   }
+  function updateRetencaoValorFields(){
+    const multaSim=document.getElementById('ret-possui-multa')?.value==='Sim';
+    const inadSim=document.getElementById('ret-inadimplencia')?.value==='Sim';
+    const multaWrap=document.getElementById('ret-multa-valor-wrap'),inadWrap=document.getElementById('ret-inadimplencia-valor-wrap'),row=document.getElementById('ret-valores-row');
+    if(multaWrap)multaWrap.style.display=multaSim?'block':'none';
+    if(inadWrap)inadWrap.style.display=inadSim?'block':'none';
+    if(!multaSim&&document.getElementById('ret-multa-valor'))document.getElementById('ret-multa-valor').value='';
+    if(!inadSim&&document.getElementById('ret-inadimplencia-valor'))document.getElementById('ret-inadimplencia-valor').value='';
+    if(row)row.style.display=(multaSim||inadSim)?'grid':'none';
+  }
+  document.getElementById('ret-possui-multa')?.addEventListener('change',updateRetencaoValorFields);
+  document.getElementById('ret-inadimplencia')?.addEventListener('change',updateRetencaoValorFields);
   document.getElementById('retencao-form')?.addEventListener('submit',async e=>{
     e.preventDefault();
     const invalidRet=[...e.currentTarget.querySelectorAll('[required]')].find(el=>!el.value.trim());
@@ -1750,10 +1762,12 @@ ${stepsHtml}
       data_assinatura:document.getElementById('ret-data-assinatura').value||null,
       prazo_inicial_meses:document.getElementById('ret-prazo-inicial').value?Number(document.getElementById('ret-prazo-inicial').value):null,
       possui_multa:document.getElementById('ret-possui-multa').value||null,
-      motivo_cancelamento:document.getElementById('ret-motivo').value||null,
+      multa_valor:document.getElementById('ret-multa-valor').value?Number(document.getElementById('ret-multa-valor').value):null,
+      motivo_cancelamento:document.getElementById('ret-motivo').value.trim()||null,
       motivo_detalhamento:document.getElementById('ret-detalhamento').value.trim()||null,
       tratativa:document.getElementById('ret-tratativa').value.trim()||null,
       inadimplencia:document.getElementById('ret-inadimplencia').value||null,
+      inadimplencia_valor:document.getElementById('ret-inadimplencia-valor').value?Number(document.getElementById('ret-inadimplencia-valor').value):null,
       created_by:window.currentUserName||null,
     };
     const submitBtn=e.currentTarget.querySelector('button[type="submit"]');submitBtn.disabled=true;submitBtn.textContent='Salvando…';
@@ -1761,6 +1775,7 @@ ${stepsHtml}
     submitBtn.disabled=false;submitBtn.textContent='Salvar Registro';
     if(error){alert('Não foi possível salvar o registro. Tente novamente.');console.warn(error);return}
     e.currentTarget.reset();
+    updateRetencaoValorFields();
     loadRetentionRecords();
   });
 
