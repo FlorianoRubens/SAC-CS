@@ -140,8 +140,19 @@ header{
 .view-tab:hover{color:var(--text)}
 .view-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
 .nav-summary{margin-left:auto;font-size:11px;color:var(--muted);white-space:nowrap;padding-left:16px}
-body[data-view="dashboard"] main{display:none}
-body[data-view="management"] .dashboard-shell{display:none}
+body[data-view="dashboard"] main,body[data-view="dashboard"] .retencao-shell{display:none}
+body[data-view="management"] .dashboard-shell,body[data-view="management"] .retencao-shell{display:none}
+body[data-view="retencao"] main,body[data-view="retencao"] .dashboard-shell{display:none}
+.retencao-row{display:grid;gap:14px;margin-bottom:16px}
+.retencao-row.cols-2{grid-template-columns:1fr 1fr}
+.retencao-row.cols-3{grid-template-columns:1fr 1fr 1fr}
+@media(max-width:760px){.retencao-row.cols-2,.retencao-row.cols-3{grid-template-columns:1fr}}
+.retencao-item{border:1px solid var(--border);border-radius:var(--r-md);padding:14px 16px;background:var(--surface-2)}
+.retencao-item-name{font-weight:700;font-size:14px;color:var(--text);margin-bottom:3px}
+.retencao-item-meta{font-size:11px;color:var(--muted);margin-bottom:8px}
+.retencao-item-row{font-size:12.5px;color:var(--text);margin-bottom:4px}
+.retencao-item-row strong{color:var(--muted);font-weight:650}
+.retencao-badges{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
 
 /* ---------- Layout ---------- */
 .dashboard-shell,main{max-width:var(--shell);margin:0 auto;padding:22px var(--pad) 56px}
@@ -541,6 +552,7 @@ body.role-viewer .editor-only{display:none !important}
   <div class="workspace-nav-inner">
     <button class="view-tab active" data-view-target="dashboard">Visão executiva</button>
     <button class="view-tab" data-view-target="management">Gestão dos chamados</button>
+    <button class="view-tab" data-view-target="retencao">Retenção</button>
     <span class="nav-summary">Qualidade e Melhoria Contínua · análise interativa e editável</span>
   </div>
 </nav>
@@ -828,6 +840,42 @@ body.role-viewer .editor-only{display:none !important}
 
 </div>
 </main>
+<section class="retencao-shell" aria-label="Retenção de clientes">
+  <article class="panel editor-only" style="max-width:920px;margin:0 auto 20px;">
+    <div class="panel-title">Novo registro de retenção</div>
+    <form id="retencao-form" novalidate>
+      <div class="retencao-row cols-2">
+        <div class="field"><label>Parceiro</label><input type="number" id="ret-parceiro" placeholder="Código do parceiro"></div>
+        <div class="field"><label>Nome do Cliente</label><input type="text" id="ret-cliente" required placeholder="Nome completo do cliente"></div>
+      </div>
+      <div class="retencao-row cols-3">
+        <div class="field"><label>Data de Assinatura do Contrato</label><input type="date" id="ret-data-assinatura"></div>
+        <div class="field"><label>Prazo Inicial do Contrato (meses)</label><input type="number" min="0" id="ret-prazo-inicial" placeholder="Ex.: 12"></div>
+        <div class="field"><label>Possui Multa</label><select id="ret-possui-multa"><option value="">Selecione</option><option>Sim</option><option>Não</option></select></div>
+      </div>
+      <div class="retencao-row cols-2">
+        <!-- Lista fixa por enquanto; preparar para virar cadastro editável futuramente -->
+        <div class="field"><label>Motivo do Cancelamento</label><select id="ret-motivo"><option value="">Selecione</option><option>Preço/Custo elevado</option><option>Insatisfação com o atendimento</option><option>Problemas técnicos recorrentes</option><option>Mudança de endereço/Encerramento das atividades</option><option>Contratou concorrente</option><option>Não utiliza mais o serviço</option><option>Dificuldade financeira</option><option>Outro</option></select></div>
+        <div class="field"><label>Inadimplência</label><select id="ret-inadimplencia"><option value="">Selecione</option><option>Sim</option><option>Não</option></select></div>
+      </div>
+      <div class="retencao-row cols-1">
+        <div class="field"><label>Detalhamento do Motivo</label><textarea id="ret-detalhamento" placeholder="Descreva com mais detalhes o motivo apresentado pelo cliente"></textarea></div>
+      </div>
+      <div class="retencao-row cols-1">
+        <div class="field"><label>Tratativa</label><input type="text" id="ret-tratativa" placeholder="Ação realizada pelo responsável pela retenção"></div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;">
+        <button type="submit" class="action-btn primary">Salvar Registro</button>
+      </div>
+    </form>
+  </article>
+  <article class="panel" style="max-width:920px;margin:0 auto;">
+    <div class="panel-title">Clientes em retenção (<span id="retencao-count">0</span>)</div>
+    <div id="retencao-list" style="display:flex;flex-direction:column;gap:10px;">
+      <div style="font-size:12.5px;color:var(--muted);">Carregando registros…</div>
+    </div>
+  </article>
+</section>
 <div class="modal-backdrop" id="record-modal">
   <form class="modal" id="record-form" novalidate>
     <div class="modal-head"><h3 id="modal-title">Novo registro</h3><button type="button" class="modal-close" data-close-modal>×</button></div>
@@ -913,6 +961,7 @@ body.role-viewer .editor-only{display:none !important}
       localStorage.setItem(STORAGE_KEY,data.html);
       reRenderAfterRemoteUpdate();
     }).subscribe();
+    loadRetentionRecords();
   }
   const getCards=()=>[...document.querySelectorAll('#records-root .card')];
   const setText=(id,value)=>{const el=document.getElementById(id);if(el)el.textContent=value};
@@ -1652,6 +1701,68 @@ ${stepsHtml}
     setSavedFilters(list);renderSavedFilters();
   });
   renderSavedFilters();
+
+  // ====== RETENÇÃO — cadastro e acompanhamento de clientes em cancelamento ======
+  function renderRetentionList(records){
+    const list=document.getElementById('retencao-list');
+    setText('retencao-count',records.length);
+    if(!records.length){list.innerHTML='<div style="font-size:12.5px;color:var(--muted);">Nenhum cliente em retenção registrado ainda.</div>';return}
+    list.innerHTML=records.map(r=>{
+      const dataFmt=r.data_assinatura?new Date(r.data_assinatura+'T00:00:00').toLocaleDateString('pt-BR'):'Não informada';
+      const badges=[];
+      if(r.possui_multa)badges.push(`<span class="data-chip${r.possui_multa==='Sim'?' data-chip-alert':''}">Multa: ${escHtml(r.possui_multa)}</span>`);
+      if(r.inadimplencia)badges.push(`<span class="data-chip${r.inadimplencia==='Sim'?' data-chip-alert':''}">Inadimplência: ${escHtml(r.inadimplencia)}</span>`);
+      if(r.parceiro)badges.push(`<span class="data-chip">Parceiro: ${escHtml(String(r.parceiro))}</span>`);
+      return `<div class="retencao-item">
+        <div class="retencao-item-name">${escHtml(r.cliente_nome||'Sem nome')}</div>
+        <div class="retencao-item-meta">Assinatura: ${dataFmt}${r.prazo_inicial_meses?` · Prazo inicial: ${escHtml(String(r.prazo_inicial_meses))} meses`:''}</div>
+        ${r.motivo_cancelamento?`<div class="retencao-item-row"><strong>Motivo:</strong> ${escHtml(r.motivo_cancelamento)}</div>`:''}
+        ${r.motivo_detalhamento?`<div class="retencao-item-row"><strong>Detalhamento:</strong> ${escHtml(r.motivo_detalhamento)}</div>`:''}
+        ${r.tratativa?`<div class="retencao-item-row"><strong>Tratativa:</strong> ${escHtml(r.tratativa)}</div>`:''}
+        <div class="retencao-badges">${badges.join('')}</div>
+      </div>`;
+    }).join('');
+  }
+  function loadRetentionRecords(){
+    if(!db)return;
+    db.from('retention_records').select('*').order('created_at',{ascending:false}).then(({data,error})=>{
+      if(error){console.warn('Erro ao carregar registros de retenção:',error);document.getElementById('retencao-list').innerHTML='<div style="font-size:12.5px;color:var(--muted);">Não foi possível carregar os registros.</div>';return}
+      renderRetentionList(data||[]);
+    });
+  }
+  document.getElementById('retencao-form')?.addEventListener('submit',async e=>{
+    e.preventDefault();
+    const invalidRet=[...e.currentTarget.querySelectorAll('[required]')].find(el=>!el.value.trim());
+    if(invalidRet){
+      invalidRet.style.borderColor='var(--danger)';invalidRet.style.boxShadow='0 0 0 2px color-mix(in srgb,var(--danger) 30%,transparent)';
+      invalidRet.scrollIntoView({behavior:'smooth',block:'center'});invalidRet.focus();
+      let warn=invalidRet.parentElement.querySelector('.field-error');
+      if(!warn){warn=document.createElement('div');warn.className='field-error';warn.style.cssText='color:var(--danger);font-size:11px;font-weight:650;margin-top:4px;';invalidRet.insertAdjacentElement('afterend',warn)}
+      warn.textContent='Preencha este campo antes de salvar.';
+      const clearWarn=()=>{invalidRet.style.borderColor='';invalidRet.style.boxShadow='';warn.remove();invalidRet.removeEventListener('input',clearWarn)};
+      invalidRet.addEventListener('input',clearWarn);
+      return;
+    }
+    if(!db){alert('Sem conexão com o servidor no momento. Tente novamente em instantes.');return}
+    const payload={
+      parceiro:document.getElementById('ret-parceiro').value?Number(document.getElementById('ret-parceiro').value):null,
+      cliente_nome:document.getElementById('ret-cliente').value.trim(),
+      data_assinatura:document.getElementById('ret-data-assinatura').value||null,
+      prazo_inicial_meses:document.getElementById('ret-prazo-inicial').value?Number(document.getElementById('ret-prazo-inicial').value):null,
+      possui_multa:document.getElementById('ret-possui-multa').value||null,
+      motivo_cancelamento:document.getElementById('ret-motivo').value||null,
+      motivo_detalhamento:document.getElementById('ret-detalhamento').value.trim()||null,
+      tratativa:document.getElementById('ret-tratativa').value.trim()||null,
+      inadimplencia:document.getElementById('ret-inadimplencia').value||null,
+      created_by:window.currentUserName||null,
+    };
+    const submitBtn=e.currentTarget.querySelector('button[type="submit"]');submitBtn.disabled=true;submitBtn.textContent='Salvando…';
+    const {error}=await db.from('retention_records').insert(payload);
+    submitBtn.disabled=false;submitBtn.textContent='Salvar Registro';
+    if(error){alert('Não foi possível salvar o registro. Tente novamente.');console.warn(error);return}
+    e.currentTarget.reset();
+    loadRetentionRecords();
+  });
 
   document.body.dataset.view='dashboard';
   document.querySelectorAll('.view-tab').forEach(tab=>tab.addEventListener('click',()=>{
