@@ -999,8 +999,24 @@ body.role-viewer .editor-only{display:none !important}
     svg+='</svg>';
     return trimmed?`<div style="font-size:10px;color:var(--muted);">Mostrando os eventos mais recentes</div>${svg}`:svg;
   }
+  function ensurePendingValidationButtons(){
+    document.querySelectorAll('#pending-validation-list .resolved-item').forEach(item=>{
+      const info=item.querySelector('.resolved-info');if(!info)return;
+      if(!info.querySelector('.confirm-validation')){
+        const confirmBtn=document.createElement('button');confirmBtn.type='button';confirmBtn.className='mini-btn confirm-validation editor-only';confirmBtn.style.marginTop='6px';confirmBtn.textContent='✓ Cliente validou';
+        const history=info.querySelector('.resolved-history');
+        if(history)history.before(confirmBtn);else info.appendChild(confirmBtn);
+      }
+      if(!info.querySelector('.reject-validation')){
+        const rejectBtn=document.createElement('button');rejectBtn.type='button';rejectBtn.className='mini-btn reject-validation editor-only';rejectBtn.style.marginTop='6px';rejectBtn.style.marginLeft='6px';rejectBtn.textContent='✗ Não validado';
+        const confirmBtn=info.querySelector('.confirm-validation');
+        if(confirmBtn)confirmBtn.after(rejectBtn);else{const history=info.querySelector('.resolved-history');if(history)history.before(rejectBtn);else info.appendChild(rejectBtn)}
+      }
+    });
+  }
   function decorateCards(){
     Object.keys(TEAMS).forEach(ensureTeamSection);
+    ensurePendingValidationButtons();
     getCards().forEach(card=>{
       if(!card.dataset.team)card.dataset.team=card.id.startsWith('cv')?'varejo':'portaria';
       if(!card.dataset.openDate){
