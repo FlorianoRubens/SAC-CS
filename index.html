@@ -153,6 +153,7 @@ body[data-view="retencao"] main,body[data-view="retencao"] .dashboard-shell{disp
 .retencao-item-row{font-size:12.5px;color:var(--text);margin-bottom:4px}
 .retencao-item-row strong{color:var(--muted);font-weight:650}
 .retencao-badges{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.retencao-alert-card{border-left:3px solid var(--danger) !important}
 
 /* ---------- Layout ---------- */
 .dashboard-shell,main{max-width:var(--shell);margin:0 auto;padding:22px var(--pad) 56px}
@@ -903,6 +904,37 @@ body.role-viewer .editor-only{display:none !important}
       <div class="field full"><label>Evidência ou referência</label><input id="f-evidence" placeholder="Nome do arquivo, link, número da OS ou outra referência"></div>
     </div>
     <div class="modal-foot"><button type="button" data-close-modal>Cancelar</button><button type="submit" class="save">Salvar registro</button></div>
+  </form>
+</div>
+<div class="modal-backdrop" id="retencao-edit-modal">
+  <form class="modal" id="retencao-edit-form" novalidate>
+    <div class="modal-head"><h3>Editar registro de retenção</h3><button type="button" class="modal-close" data-close-modal>×</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-ret-id">
+      <div class="field"><label>Parceiro</label><input type="number" id="edit-ret-parceiro"></div>
+      <div class="field"><label>Nome do Cliente</label><input type="text" id="edit-ret-cliente" required></div>
+      <div class="field"><label>Data de Assinatura do Contrato</label><input type="date" id="edit-ret-data-assinatura"></div>
+      <div class="field"><label>Prazo Inicial do Contrato (meses)</label><input type="number" min="0" id="edit-ret-prazo-inicial"></div>
+      <div class="field"><label>Possui Multa</label><select id="edit-ret-possui-multa"><option value="">Selecione</option><option>Sim</option><option>Não</option></select></div>
+      <div class="field"><label>Valor da Multa (R$)</label><input type="number" step="0.01" min="0" id="edit-ret-multa-valor"></div>
+      <div class="field"><label>Inadimplência</label><select id="edit-ret-inadimplencia"><option value="">Selecione</option><option>Sim</option><option>Não</option></select></div>
+      <div class="field"><label>Valor em Aberto (R$)</label><input type="number" step="0.01" min="0" id="edit-ret-inadimplencia-valor"></div>
+      <div class="field full"><label>Motivo do Cancelamento</label><input type="text" id="edit-ret-motivo"></div>
+      <div class="field full"><label>Detalhamento do Motivo</label><textarea id="edit-ret-detalhamento"></textarea></div>
+      <div class="field full"><label>Tratativa</label><input type="text" id="edit-ret-tratativa"></div>
+    </div>
+    <div class="modal-foot"><button type="button" data-close-modal>Cancelar</button><button type="submit" class="save">Salvar alterações</button></div>
+  </form>
+</div>
+<div class="modal-backdrop" id="retencao-action-modal">
+  <form class="modal" id="retencao-action-form" novalidate>
+    <div class="modal-head"><h3>Nova ação de retenção</h3><button type="button" class="modal-close" data-close-modal>×</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="ret-action-id">
+      <div class="field"><label>Responsável</label><input type="text" id="ret-action-responsavel" placeholder="Nome de quem está registrando"></div>
+      <div class="field full"><label>Ação/atualização</label><textarea id="ret-action-texto" required placeholder="Descreva a ação realizada"></textarea></div>
+    </div>
+    <div class="modal-foot"><button type="button" data-close-modal>Cancelar</button><button type="submit" class="save">Salvar ação</button></div>
   </form>
 </div>
 <div class="modal-backdrop" id="global-search-modal">
@@ -1703,26 +1735,139 @@ ${stepsHtml}
 
   // ====== RETENÇÃO — cadastro e acompanhamento de clientes em cancelamento ======
   function formatBRL(v){return v||v===0?`R$ ${Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}`:''}
+  function retentionActionStepHtml(a){
+    const when=a.created_at?new Date(a.created_at).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}).replace(',',' às'):'';
+    return `<div class="step type-action"><div class="step-dot"></div><div class="step-badge">✦ Atualização</div><div class="step-date">${escHtml(when)}${a.created_by?` · Registrado por ${escHtml(a.created_by)}`:''}</div><div class="step-responsible">Responsável: ${escHtml(a.responsavel||'Não informado')}</div><div class="step-text">${escHtml(a.text||'')}</div></div>`;
+  }
   function renderRetentionList(records){
+    window.__retentionRecords=records;
     const list=document.getElementById('retencao-list');
     setText('retencao-count',records.length);
     if(!records.length){list.innerHTML='<div style="font-size:12.5px;color:var(--muted);">Nenhum cliente em retenção registrado ainda.</div>';return}
     list.innerHTML=records.map(r=>{
       const dataFmt=r.data_assinatura?new Date(r.data_assinatura+'T00:00:00').toLocaleDateString('pt-BR'):'Não informada';
+      const isAlert=r.possui_multa==='Sim'||r.inadimplencia==='Sim';
       const badges=[];
       if(r.possui_multa)badges.push(`<span class="data-chip${r.possui_multa==='Sim'?' data-chip-alert':''}">Multa: ${escHtml(r.possui_multa)}${r.multa_valor?` (${escHtml(formatBRL(r.multa_valor))})`:''}</span>`);
       if(r.inadimplencia)badges.push(`<span class="data-chip${r.inadimplencia==='Sim'?' data-chip-alert':''}">Inadimplência: ${escHtml(r.inadimplencia)}${r.inadimplencia_valor?` (${escHtml(formatBRL(r.inadimplencia_valor))})`:''}</span>`);
       if(r.parceiro)badges.push(`<span class="data-chip">Parceiro: ${escHtml(String(r.parceiro))}</span>`);
-      return `<div class="retencao-item">
-        <div class="retencao-item-name">${escHtml(r.cliente_nome||'Sem nome')}</div>
-        <div class="retencao-item-meta">Assinatura: ${dataFmt}${r.prazo_inicial_meses?` · Prazo inicial: ${escHtml(String(r.prazo_inicial_meses))} meses`:''}</div>
-        ${r.motivo_cancelamento?`<div class="retencao-item-row"><strong>Motivo:</strong> ${escHtml(r.motivo_cancelamento)}</div>`:''}
-        ${r.motivo_detalhamento?`<div class="retencao-item-row"><strong>Detalhamento:</strong> ${escHtml(r.motivo_detalhamento)}</div>`:''}
-        ${r.tratativa?`<div class="retencao-item-row"><strong>Tratativa:</strong> ${escHtml(r.tratativa)}</div>`:''}
-        <div class="retencao-badges">${badges.join('')}</div>
+      const cardId=`retcard-${r.id}`;
+      const acoes=Array.isArray(r.acoes)?r.acoes:[];
+      return `<div class="card${isAlert?' retencao-alert-card':''}" id="${cardId}" data-ret-id="${r.id}">
+        <div class="card-header" onclick="toggle('${cardId}')">
+          <div class="card-meta">
+            <div class="card-id">Parceiro ${escHtml(r.parceiro?String(r.parceiro):'—')} · Assinatura: ${escHtml(dataFmt)}</div>
+            <div class="card-name">${escHtml(r.cliente_nome||'Sem nome')}</div>
+            <div class="card-desc">${escHtml(r.motivo_cancelamento||'Motivo não informado')}</div>
+            <div class="card-tags">${badges.join('')}</div>
+          </div>
+          <div class="card-right">
+            <div class="update-count"><span style="width:7px;height:7px;border-radius:50%;background:var(--green2);display:inline-block"></span> ${acoes.length} ação${acoes.length===1?'':'ões'} registrada${acoes.length===1?'':'s'}</div>
+            <div class="toggle-btn">ver detalhes <svg fill="none" viewBox="0 0 10 6" width="10" height="6" stroke="currentColor" stroke-width="1.5"><path d="M1 1l4 4 4-4"/></svg></div>
+          </div>
+        </div>
+        <div class="timeline-wrap">
+          <div class="timeline-intro">Prazo inicial do contrato: <strong>${r.prazo_inicial_meses?escHtml(String(r.prazo_inicial_meses))+' meses':'Não informado'}</strong></div>
+          <div class="problem-box"><label>Detalhamento do motivo</label><p>${escHtml(r.motivo_detalhamento||'Sem detalhamento registrado.')}</p></div>
+          ${r.tratativa?`<div class="problem-box"><label>Tratativa inicial</label><p>${escHtml(r.tratativa)}</p></div>`:''}
+          <div class="timeline">
+            ${acoes.length?acoes.map(retentionActionStepHtml).join(''):'<div class="step type-new"><div class="step-dot"></div><div class="step-badge">Sem registro</div><div class="step-text">Nenhuma ação adicional registrada ainda.</div></div>'}
+          </div>
+        </div>
+        <div class="edit-tools">
+          <button type="button" class="mini-btn retencao-edit editor-only" data-id="${r.id}">Editar</button>
+          <button type="button" class="mini-btn retencao-add-action editor-only" data-id="${r.id}">+ Nova ação</button>
+          <button type="button" class="mini-btn retencao-delete editor-only" data-id="${r.id}" style="color:var(--danger);border-color:color-mix(in srgb,var(--danger) 40%,transparent);">Excluir</button>
+        </div>
       </div>`;
     }).join('');
   }
+  function getRetentionRecord(id){return (window.__retentionRecords||[]).find(r=>String(r.id)===String(id))}
+  function openRetencaoEditModal(r){
+    document.getElementById('edit-ret-id').value=r.id;
+    document.getElementById('edit-ret-parceiro').value=r.parceiro||'';
+    document.getElementById('edit-ret-cliente').value=r.cliente_nome||'';
+    document.getElementById('edit-ret-data-assinatura').value=r.data_assinatura||'';
+    document.getElementById('edit-ret-prazo-inicial').value=r.prazo_inicial_meses||'';
+    document.getElementById('edit-ret-possui-multa').value=r.possui_multa||'';
+    document.getElementById('edit-ret-multa-valor').value=r.multa_valor||'';
+    document.getElementById('edit-ret-inadimplencia').value=r.inadimplencia||'';
+    document.getElementById('edit-ret-inadimplencia-valor').value=r.inadimplencia_valor||'';
+    document.getElementById('edit-ret-motivo').value=r.motivo_cancelamento||'';
+    document.getElementById('edit-ret-detalhamento').value=r.motivo_detalhamento||'';
+    document.getElementById('edit-ret-tratativa').value=r.tratativa||'';
+    document.getElementById('retencao-edit-modal').classList.add('open');
+  }
+  function closeRetencaoEditModal(){document.getElementById('retencao-edit-modal').classList.remove('open')}
+  function openRetencaoActionModal(id){
+    document.getElementById('ret-action-id').value=id;
+    document.getElementById('ret-action-responsavel').value='';
+    document.getElementById('ret-action-texto').value='';
+    document.getElementById('retencao-action-modal').classList.add('open');
+  }
+  function closeRetencaoActionModal(){document.getElementById('retencao-action-modal').classList.remove('open')}
+  document.getElementById('retencao-edit-modal').addEventListener('click',e=>{if(e.target.matches('[data-close-modal]')||e.target===document.getElementById('retencao-edit-modal'))closeRetencaoEditModal()});
+  document.getElementById('retencao-action-modal').addEventListener('click',e=>{if(e.target.matches('[data-close-modal]')||e.target===document.getElementById('retencao-action-modal'))closeRetencaoActionModal()});
+  document.getElementById('retencao-list')?.addEventListener('click',e=>{
+    const editBtn=e.target.closest('.retencao-edit');
+    if(editBtn){e.stopPropagation();const r=getRetentionRecord(editBtn.dataset.id);if(r)openRetencaoEditModal(r);return}
+    const actionBtn=e.target.closest('.retencao-add-action');
+    if(actionBtn){e.stopPropagation();openRetencaoActionModal(actionBtn.dataset.id);return}
+    const delBtn=e.target.closest('.retencao-delete');
+    if(delBtn){
+      e.stopPropagation();
+      if(!confirm('Tem certeza que deseja excluir este registro de retenção? Essa ação não pode ser desfeita.'))return;
+      if(!db)return;
+      db.from('retention_records').delete().eq('id',delBtn.dataset.id).then(({error})=>{
+        if(error){alert('Não foi possível excluir. Tente novamente.');console.warn(error);return}
+        loadRetentionRecords();
+      });
+      return;
+    }
+  });
+  document.getElementById('retencao-edit-form').addEventListener('submit',async e=>{
+    e.preventDefault();
+    const form=e.currentTarget;
+    if(!document.getElementById('edit-ret-cliente').value.trim()){document.getElementById('edit-ret-cliente').focus();return}
+    if(!db)return;
+    const id=document.getElementById('edit-ret-id').value;
+    const payload={
+      parceiro:document.getElementById('edit-ret-parceiro').value?Number(document.getElementById('edit-ret-parceiro').value):null,
+      cliente_nome:document.getElementById('edit-ret-cliente').value.trim(),
+      data_assinatura:document.getElementById('edit-ret-data-assinatura').value||null,
+      prazo_inicial_meses:document.getElementById('edit-ret-prazo-inicial').value?Number(document.getElementById('edit-ret-prazo-inicial').value):null,
+      possui_multa:document.getElementById('edit-ret-possui-multa').value||null,
+      multa_valor:document.getElementById('edit-ret-multa-valor').value?Number(document.getElementById('edit-ret-multa-valor').value):null,
+      inadimplencia:document.getElementById('edit-ret-inadimplencia').value||null,
+      inadimplencia_valor:document.getElementById('edit-ret-inadimplencia-valor').value?Number(document.getElementById('edit-ret-inadimplencia-valor').value):null,
+      motivo_cancelamento:document.getElementById('edit-ret-motivo').value.trim()||null,
+      motivo_detalhamento:document.getElementById('edit-ret-detalhamento').value.trim()||null,
+      tratativa:document.getElementById('edit-ret-tratativa').value.trim()||null,
+    };
+    const saveBtn=form.querySelector('button[type="submit"]');saveBtn.disabled=true;saveBtn.textContent='Salvando…';
+    const {error}=await db.from('retention_records').update(payload).eq('id',id);
+    saveBtn.disabled=false;saveBtn.textContent='Salvar alterações';
+    if(error){alert('Não foi possível salvar as alterações.');console.warn(error);return}
+    closeRetencaoEditModal();
+    loadRetentionRecords();
+  });
+  document.getElementById('retencao-action-form').addEventListener('submit',async e=>{
+    e.preventDefault();
+    const form=e.currentTarget;
+    const texto=document.getElementById('ret-action-texto').value.trim();
+    if(!texto){document.getElementById('ret-action-texto').focus();return}
+    if(!db)return;
+    const id=document.getElementById('ret-action-id').value;
+    const record=getRetentionRecord(id);
+    const acoesAtuais=Array.isArray(record?.acoes)?record.acoes:[];
+    const novaAcao={text:texto,responsavel:document.getElementById('ret-action-responsavel').value.trim(),created_by:window.currentUserName||null,created_at:new Date().toISOString()};
+    const saveBtn=form.querySelector('button[type="submit"]');saveBtn.disabled=true;saveBtn.textContent='Salvando…';
+    const {error}=await db.from('retention_records').update({acoes:[...acoesAtuais,novaAcao]}).eq('id',id);
+    saveBtn.disabled=false;saveBtn.textContent='Salvar ação';
+    if(error){alert('Não foi possível salvar a ação.');console.warn(error);return}
+    closeRetencaoActionModal();
+    loadRetentionRecords();
+  });
   function loadRetentionRecords(){
     if(!db)return;
     db.from('retention_records').select('*').order('created_at',{ascending:false}).then(({data,error})=>{
