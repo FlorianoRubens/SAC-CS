@@ -1744,7 +1744,8 @@ ${stepsHtml}
   document.getElementById('ret-inadimplencia')?.addEventListener('change',updateRetencaoValorFields);
   document.getElementById('retencao-form')?.addEventListener('submit',async e=>{
     e.preventDefault();
-    const invalidRet=[...e.currentTarget.querySelectorAll('[required]')].find(el=>!el.value.trim());
+    const form=e.currentTarget;
+    const invalidRet=[...form.querySelectorAll('[required]')].find(el=>!el.value.trim());
     if(invalidRet){
       invalidRet.style.borderColor='var(--danger)';invalidRet.style.boxShadow='0 0 0 2px color-mix(in srgb,var(--danger) 30%,transparent)';
       invalidRet.scrollIntoView({behavior:'smooth',block:'center'});invalidRet.focus();
@@ -1770,11 +1771,11 @@ ${stepsHtml}
       inadimplencia_valor:document.getElementById('ret-inadimplencia-valor').value?Number(document.getElementById('ret-inadimplencia-valor').value):null,
       created_by:window.currentUserName||null,
     };
-    const submitBtn=e.currentTarget.querySelector('button[type="submit"]');submitBtn.disabled=true;submitBtn.textContent='Salvando…';
+    const submitBtn=form.querySelector('button[type="submit"]');submitBtn.disabled=true;submitBtn.textContent='Salvando…';
     const {error}=await db.from('retention_records').insert(payload);
     submitBtn.disabled=false;submitBtn.textContent='Salvar Registro';
     if(error){alert('Não foi possível salvar o registro. Tente novamente.');console.warn(error);return}
-    e.currentTarget.reset();
+    form.reset();
     updateRetencaoValorFields();
     loadRetentionRecords();
   });
