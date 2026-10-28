@@ -325,7 +325,8 @@ body[data-view="retencao"] main,body[data-view="retencao"] .dashboard-shell{disp
 .step.type-waiting .step-badge{color:var(--purple)}
 .step.type-done .step-badge{color:var(--success)}
 .step-date{font:500 10px var(--mono);color:var(--muted)}
-.step-text{font-size:12.5px;color:var(--text-2)}
+.step-text{font-size:12.5px;color:var(--text-2);white-space:pre-line}
+#retencao-list .problem-box p{white-space:pre-line}
 .step-responsible{display:inline-flex;margin:4px 0 6px;padding:3px 8px;border-radius:var(--r-xs);background:var(--brand-soft);color:var(--accent);font-size:10px;font-weight:650}
 
 /* ---------- Resolvidos ---------- */
@@ -852,15 +853,16 @@ body.role-viewer .editor-only{display:none !important}
       <div class="retencao-row cols-3">
         <div class="field"><label>Data de Assinatura do Contrato</label><input type="date" id="ret-data-assinatura"></div>
         <div class="field"><label>Prazo Inicial do Contrato (meses)</label><input type="number" min="0" id="ret-prazo-inicial" placeholder="Ex.: 12"></div>
+        <div class="field"><label>Valor do Contrato (R$)</label><input type="text" inputmode="decimal" id="ret-valor-contrato" placeholder="Ex.: 2.400,00"></div>
+      </div>
+      <div class="retencao-row cols-3">
         <div class="field"><label>Possui Multa</label><select id="ret-possui-multa"><option value="">Selecione</option><option>Sim</option><option>Não</option></select></div>
+        <div class="field"><label>Inadimplência</label><select id="ret-inadimplencia"><option value="">Selecione</option><option>Sim</option><option>Não</option></select></div>
+        <div class="field"><label>Motivo do Cancelamento</label><input type="text" id="ret-motivo" placeholder="Descreva o principal motivo informado pelo cliente"></div>
       </div>
       <div class="retencao-row cols-2" id="ret-valores-row" style="display:none">
-        <div class="field" id="ret-multa-valor-wrap" style="display:none"><label>Valor da Multa (R$)</label><input type="number" step="0.01" min="0" id="ret-multa-valor" placeholder="Ex.: 1500.00"></div>
-        <div class="field" id="ret-inadimplencia-valor-wrap" style="display:none"><label>Valor em Aberto (R$)</label><input type="number" step="0.01" min="0" id="ret-inadimplencia-valor" placeholder="Ex.: 850.00"></div>
-      </div>
-      <div class="retencao-row cols-2">
-        <div class="field"><label>Motivo do Cancelamento</label><input type="text" id="ret-motivo" placeholder="Descreva o principal motivo informado pelo cliente"></div>
-        <div class="field"><label>Inadimplência</label><select id="ret-inadimplencia"><option value="">Selecione</option><option>Sim</option><option>Não</option></select></div>
+        <div class="field" id="ret-multa-valor-wrap" style="display:none"><label>Valor da Multa (R$)</label><input type="text" inputmode="decimal" id="ret-multa-valor" placeholder="Ex.: 1.500,00"></div>
+        <div class="field" id="ret-inadimplencia-valor-wrap" style="display:none"><label>Valor em Aberto (R$)</label><input type="text" inputmode="decimal" id="ret-inadimplencia-valor" placeholder="Ex.: 850,00"></div>
       </div>
       <div class="retencao-row cols-1">
         <div class="field"><label>Detalhamento do Motivo</label><textarea id="ret-detalhamento" placeholder="Descreva com mais detalhes o motivo apresentado pelo cliente"></textarea></div>
@@ -915,10 +917,11 @@ body.role-viewer .editor-only{display:none !important}
       <div class="field"><label>Nome do Cliente</label><input type="text" id="edit-ret-cliente" required></div>
       <div class="field"><label>Data de Assinatura do Contrato</label><input type="date" id="edit-ret-data-assinatura"></div>
       <div class="field"><label>Prazo Inicial do Contrato (meses)</label><input type="number" min="0" id="edit-ret-prazo-inicial"></div>
+      <div class="field"><label>Valor do Contrato (R$)</label><input type="text" inputmode="decimal" id="edit-ret-valor-contrato" placeholder="Ex.: 2.400,00"></div>
       <div class="field"><label>Possui Multa</label><select id="edit-ret-possui-multa"><option value="">Selecione</option><option>Sim</option><option>Não</option></select></div>
-      <div class="field"><label>Valor da Multa (R$)</label><input type="number" step="0.01" min="0" id="edit-ret-multa-valor"></div>
+      <div class="field"><label>Valor da Multa (R$)</label><input type="text" inputmode="decimal" id="edit-ret-multa-valor" placeholder="Ex.: 1.500,00"></div>
       <div class="field"><label>Inadimplência</label><select id="edit-ret-inadimplencia"><option value="">Selecione</option><option>Sim</option><option>Não</option></select></div>
-      <div class="field"><label>Valor em Aberto (R$)</label><input type="number" step="0.01" min="0" id="edit-ret-inadimplencia-valor"></div>
+      <div class="field"><label>Valor em Aberto (R$)</label><input type="text" inputmode="decimal" id="edit-ret-inadimplencia-valor" placeholder="Ex.: 850,00"></div>
       <div class="field full"><label>Motivo do Cancelamento</label><input type="text" id="edit-ret-motivo"></div>
       <div class="field full"><label>Detalhamento do Motivo</label><textarea id="edit-ret-detalhamento"></textarea></div>
       <div class="field full"><label>Tratativa</label><input type="text" id="edit-ret-tratativa"></div>
@@ -1735,6 +1738,22 @@ ${stepsHtml}
 
   // ====== RETENÇÃO — cadastro e acompanhamento de clientes em cancelamento ======
   function formatBRL(v){return v||v===0?`R$ ${Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}`:''}
+  function parseBRLInput(raw){
+    if(raw===null||raw===undefined)return null;
+    let s=String(raw).trim().replace(/^R\$\s*/i,'');
+    if(!s)return null;
+    const hasComma=s.includes(','),hasDot=s.includes('.');
+    if(hasComma&&hasDot){
+      s=s.replace(/\./g,'').replace(',','.');
+    }else if(hasComma){
+      s=s.replace(',','.');
+    }else if(hasDot){
+      const parts=s.split('.');
+      if(parts.length>1&&parts[parts.length-1].length===3)s=parts.join('');
+    }
+    const n=parseFloat(s);
+    return isNaN(n)?null:n;
+  }
   function retentionActionStepHtml(a){
     const when=a.created_at?new Date(a.created_at).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}).replace(',',' às'):'';
     return `<div class="step type-action"><div class="step-dot"></div><div class="step-badge">✦ Atualização</div><div class="step-date">${escHtml(when)}${a.created_by?` · Registrado por ${escHtml(a.created_by)}`:''}</div><div class="step-responsible">Responsável: ${escHtml(a.responsavel||'Não informado')}</div><div class="step-text">${escHtml(a.text||'')}</div></div>`;
@@ -1751,6 +1770,7 @@ ${stepsHtml}
       if(r.possui_multa)badges.push(`<span class="data-chip${r.possui_multa==='Sim'?' data-chip-alert':''}">Multa: ${escHtml(r.possui_multa)}${r.multa_valor?` (${escHtml(formatBRL(r.multa_valor))})`:''}</span>`);
       if(r.inadimplencia)badges.push(`<span class="data-chip${r.inadimplencia==='Sim'?' data-chip-alert':''}">Inadimplência: ${escHtml(r.inadimplencia)}${r.inadimplencia_valor?` (${escHtml(formatBRL(r.inadimplencia_valor))})`:''}</span>`);
       if(r.parceiro)badges.push(`<span class="data-chip">Parceiro: ${escHtml(String(r.parceiro))}</span>`);
+      if(r.valor_contrato)badges.push(`<span class="data-chip">Contrato: ${escHtml(formatBRL(r.valor_contrato))}</span>`);
       const cardId=`retcard-${r.id}`;
       const acoes=Array.isArray(r.acoes)?r.acoes:[];
       return `<div class="card${isAlert?' retencao-alert-card':''}" id="${cardId}" data-ret-id="${r.id}">
@@ -1767,7 +1787,7 @@ ${stepsHtml}
           </div>
         </div>
         <div class="timeline-wrap">
-          <div class="timeline-intro">Prazo inicial do contrato: <strong>${r.prazo_inicial_meses?escHtml(String(r.prazo_inicial_meses))+' meses':'Não informado'}</strong></div>
+          <div class="timeline-intro">Prazo inicial do contrato: <strong>${r.prazo_inicial_meses?escHtml(String(r.prazo_inicial_meses))+' meses':'Não informado'}</strong> · Valor do contrato: <strong>${r.valor_contrato?escHtml(formatBRL(r.valor_contrato)):'Não informado'}</strong></div>
           <div class="problem-box"><label>Detalhamento do motivo</label><p>${escHtml(r.motivo_detalhamento||'Sem detalhamento registrado.')}</p></div>
           ${r.tratativa?`<div class="problem-box"><label>Tratativa inicial</label><p>${escHtml(r.tratativa)}</p></div>`:''}
           <div class="timeline">
@@ -1789,10 +1809,11 @@ ${stepsHtml}
     document.getElementById('edit-ret-cliente').value=r.cliente_nome||'';
     document.getElementById('edit-ret-data-assinatura').value=r.data_assinatura||'';
     document.getElementById('edit-ret-prazo-inicial').value=r.prazo_inicial_meses||'';
+    document.getElementById('edit-ret-valor-contrato').value=r.valor_contrato?String(r.valor_contrato).replace('.',','):'';
     document.getElementById('edit-ret-possui-multa').value=r.possui_multa||'';
-    document.getElementById('edit-ret-multa-valor').value=r.multa_valor||'';
+    document.getElementById('edit-ret-multa-valor').value=r.multa_valor?String(r.multa_valor).replace('.',','):'';
     document.getElementById('edit-ret-inadimplencia').value=r.inadimplencia||'';
-    document.getElementById('edit-ret-inadimplencia-valor').value=r.inadimplencia_valor||'';
+    document.getElementById('edit-ret-inadimplencia-valor').value=r.inadimplencia_valor?String(r.inadimplencia_valor).replace('.',','):'';
     document.getElementById('edit-ret-motivo').value=r.motivo_cancelamento||'';
     document.getElementById('edit-ret-detalhamento').value=r.motivo_detalhamento||'';
     document.getElementById('edit-ret-tratativa').value=r.tratativa||'';
@@ -1836,10 +1857,11 @@ ${stepsHtml}
       cliente_nome:document.getElementById('edit-ret-cliente').value.trim(),
       data_assinatura:document.getElementById('edit-ret-data-assinatura').value||null,
       prazo_inicial_meses:document.getElementById('edit-ret-prazo-inicial').value?Number(document.getElementById('edit-ret-prazo-inicial').value):null,
+      valor_contrato:parseBRLInput(document.getElementById('edit-ret-valor-contrato').value),
       possui_multa:document.getElementById('edit-ret-possui-multa').value||null,
-      multa_valor:document.getElementById('edit-ret-multa-valor').value?Number(document.getElementById('edit-ret-multa-valor').value):null,
+      multa_valor:parseBRLInput(document.getElementById('edit-ret-multa-valor').value),
       inadimplencia:document.getElementById('edit-ret-inadimplencia').value||null,
-      inadimplencia_valor:document.getElementById('edit-ret-inadimplencia-valor').value?Number(document.getElementById('edit-ret-inadimplencia-valor').value):null,
+      inadimplencia_valor:parseBRLInput(document.getElementById('edit-ret-inadimplencia-valor').value),
       motivo_cancelamento:document.getElementById('edit-ret-motivo').value.trim()||null,
       motivo_detalhamento:document.getElementById('edit-ret-detalhamento').value.trim()||null,
       tratativa:document.getElementById('edit-ret-tratativa').value.trim()||null,
@@ -1907,13 +1929,14 @@ ${stepsHtml}
       cliente_nome:document.getElementById('ret-cliente').value.trim(),
       data_assinatura:document.getElementById('ret-data-assinatura').value||null,
       prazo_inicial_meses:document.getElementById('ret-prazo-inicial').value?Number(document.getElementById('ret-prazo-inicial').value):null,
+      valor_contrato:parseBRLInput(document.getElementById('ret-valor-contrato').value),
       possui_multa:document.getElementById('ret-possui-multa').value||null,
-      multa_valor:document.getElementById('ret-multa-valor').value?Number(document.getElementById('ret-multa-valor').value):null,
+      multa_valor:parseBRLInput(document.getElementById('ret-multa-valor').value),
       motivo_cancelamento:document.getElementById('ret-motivo').value.trim()||null,
       motivo_detalhamento:document.getElementById('ret-detalhamento').value.trim()||null,
       tratativa:document.getElementById('ret-tratativa').value.trim()||null,
       inadimplencia:document.getElementById('ret-inadimplencia').value||null,
-      inadimplencia_valor:document.getElementById('ret-inadimplencia-valor').value?Number(document.getElementById('ret-inadimplencia-valor').value):null,
+      inadimplencia_valor:parseBRLInput(document.getElementById('ret-inadimplencia-valor').value),
       created_by:window.currentUserName||null,
     };
     const submitBtn=form.querySelector('button[type="submit"]');submitBtn.disabled=true;submitBtn.textContent='Salvando…';
